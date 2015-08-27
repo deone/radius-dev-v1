@@ -17,9 +17,16 @@ Radtest Params example
 
 import os
 import sys
+import subprocess
 
-sys.path.insert(1, "/Users/deone/src/billing/lib/python2.7/site-packages")
-sys.path.insert(1, "/Users/deone/src/billing/billing")
+hostname = subprocess.check_output('hostname')[:-1] 
+
+if hostname != "Oladayos-MacBook-Pro.local":
+    sys.path.insert(1, "/Users/deone/src/billing/lib/python2.7/site-packages")
+    sys.path.insert(1, "/Users/deone/src/billing/billing")
+else:
+    sys.path.insert(1, "/root/billing/lib/python2.7/site-packages")
+    sys.path.insert(1, "/root/billing/billing")
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
 
