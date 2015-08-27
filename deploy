@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+rm /usr/local/lib/python2.7/site-packages/rules.py*
+cp rules.py /usr/local/lib/python2.7/site-packages/
