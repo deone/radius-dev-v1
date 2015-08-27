@@ -19,9 +19,9 @@ import os
 import sys
 import subprocess
 
-hostname = subprocess.check_output('hostname')[:-1] 
+hostname = subprocess.check_output('hostname')[:-1]
 
-if hostname != "Oladayos-MacBook-Pro.local":
+if hostname == 'Oladayos-MacBook-Pro.local':
     sys.path.insert(1, "/Users/deone/src/billing/lib/python2.7/site-packages")
     sys.path.insert(1, "/Users/deone/src/billing/billing")
 else:
