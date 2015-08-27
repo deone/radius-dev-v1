@@ -20,7 +20,6 @@ import sys
 import subprocess
 
 hostname = subprocess.check_output('hostname')[:-1]
-print hostname
 
 if hostname == 'Oladayos-MacBook-Pro.local':
     sys.path.insert(1, "/Users/deone/src/billing/lib/python2.7/site-packages")
