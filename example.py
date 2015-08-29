@@ -24,6 +24,13 @@ def make_env():
         sys.path.insert(1, "/root/billing/lib/python2.7/site-packages")
         sys.path.insert(1, "/root/billing/billing")
 
+def get_user(p):
+    make_env()
+    from django.contrib.auth.models import User
+    params = dict(p)
+    username = params['User-Name'][1:-1]
+    return User.objects.get(username__exact=username)
+
 def instantiate(p):
     print "*** instantiate ***"
     print p
@@ -35,11 +42,7 @@ def authorize(p):
     # print
     # print p
     # return radiusd.RLM_MODULE_OK
-    make_env()
-    from django.contrib.auth.models import User
-    params = dict(p)
-    username = params['User-Name'][1:-1]
-    user = User.objects.get(username__exact=username)
+    user = get_user(p)
 
     if user.is_active:
         return radiusd.RLM_MODULE_OK
