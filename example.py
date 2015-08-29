@@ -11,18 +11,17 @@ import subprocess
 
 import radiusd
 
-def make_env():
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
-    hostname = subprocess.check_output('hostname')[:-1]
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
+hostname = subprocess.check_output('hostname')[:-1]
 
-    if not hostname.startswith('billing'):
-        sys.path.insert(1, "/Users/deone/src/billing/lib/python2.7/site-packages")
-        sys.path.insert(1, "/Users/deone/src/billing/billing")
-    else:
-        sys.path.insert(1, "/root/billing/lib/python2.7/site-packages")
-        sys.path.insert(1, "/root/billing/billing")
+if not hostname.startswith('billing'):
+    sys.path.insert(1, "/Users/deone/src/billing/lib/python2.7/site-packages")
+    sys.path.insert(1, "/Users/deone/src/billing/billing")
+else:
+    sys.path.insert(1, "/root/billing/lib/python2.7/site-packages")
+    sys.path.insert(1, "/root/billing/billing")
 
-    from django.contrib.auth.models import User
+from django.contrib.auth.models import User
 
 def instantiate(p):
     print "*** instantiate ***"
@@ -35,7 +34,6 @@ def authorize(p):
     # print
     # print p
     # return radiusd.RLM_MODULE_OK
-    make_env()
     params = dict(p)
     username = params['User-Name'][1:-1]
     user = User.objects.get(username__exact=username)
