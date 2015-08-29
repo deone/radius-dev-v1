@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 
-rm /usr/local/lib/python2.7/site-packages/example.py*
-cp example.py /usr/local/lib/python2.7/site-packages/
+INSTPATH=/usr/local/lib/python2.7/site-packages/
+
+rm $INSTPATH/rules.py
+cp rules.py $INSTPATH
