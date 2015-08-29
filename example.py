@@ -11,11 +11,10 @@ import subprocess
 
 import radiusd
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
-
 p = (('User-Name', '"alwaysdeone@gmail.com"'), ('User-Password', '"12345"'), ('NAS-IP-Address', '192.168.8.102'), ('NAS-Port', '0'), ('Message-Authenticator', '0x7edbbcb48daa747ef293a0ba548c1f6c'))
 
 def make_env():
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
     hostname = subprocess.check_output('hostname')[:-1]
 
     if not hostname.startswith('billing'):
@@ -31,7 +30,6 @@ def instantiate(p):
 
 def authorize(p):
     print "*** authorize ***"
-    print p
     # print
     # radiusd.radlog(radiusd.L_INFO, '*** radlog call in authorize ***')
     # print
