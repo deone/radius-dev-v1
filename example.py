@@ -12,16 +12,18 @@ import subprocess
 import radiusd
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
-hostname = subprocess.check_output('hostname')[:-1]
 
-if not hostname.startswith('billing'):
-    sys.path.insert(1, "/Users/deone/src/billing/lib/python2.7/site-packages")
-    sys.path.insert(1, "/Users/deone/src/billing/billing")
-else:
-    sys.path.insert(1, "/root/billing/lib/python2.7/site-packages")
-    sys.path.insert(1, "/root/billing/billing")
+p = (('User-Name', '"alwaysdeone@gmail.com"'), ('User-Password', '"12345"'), ('NAS-IP-Address', '192.168.8.102'), ('NAS-Port', '0'), ('Message-Authenticator', '0x7edbbcb48daa747ef293a0ba548c1f6c'))
 
-from django.contrib.auth.models import User
+def make_env():
+    hostname = subprocess.check_output('hostname')[:-1]
+
+    if not hostname.startswith('billing'):
+        sys.path.insert(1, "/Users/deone/src/billing/lib/python2.7/site-packages")
+        sys.path.insert(1, "/Users/deone/src/billing/billing")
+    else:
+        sys.path.insert(1, "/root/billing/lib/python2.7/site-packages")
+        sys.path.insert(1, "/root/billing/billing")
 
 def instantiate(p):
     print "*** instantiate ***"
@@ -29,11 +31,14 @@ def instantiate(p):
 
 def authorize(p):
     print "*** authorize ***"
+    print p
     # print
     # radiusd.radlog(radiusd.L_INFO, '*** radlog call in authorize ***')
     # print
     # print p
     # return radiusd.RLM_MODULE_OK
+    make_env()
+    from django.contrib.auth.models import User
     params = dict(p)
     username = params['User-Name'][1:-1]
     user = User.objects.get(username__exact=username)
@@ -95,3 +100,7 @@ def detach():
   print "*** goodbye from example.py ***"
   return radiusd.RLM_MODULE_OK
 
+
+if __name__ == "__main__":
+    a = authorize(p)
+    print a
