@@ -6,7 +6,6 @@
 # $Id: dd5b0b88243ea2919634d1ae519f5825f0560c93 $
 
 """
-(('Acct-Session-Id', '"624874448299458941"'), ('Called-Station-Id', '"00-18-0A-F2-DE-20:Radius test"'), ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'), ('Framed-IP-Address', '172.31.3.142'), ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'), ('NAS-IP-Address', '108.161.147.120'), ('NAS-Port', '0'), ('NAS-Port-Id', '"Wireless-802.11"'), ('NAS-Port-Type', 'Wireless-802.11'), ('Service-Type', 'Login-User'), ('User-Name', '"herbertellisspectradjungle@spectrawireless.com"'), ('User-Password', '"123456"'), ('Attr-26.29671.1', '0x446a756e676c65204851203032'))
 00 %3A 18 %3A 0a %3A f2 %3A de %3A 20
 48 %3A d2 %3A 24 %3A 43 %3A a6 %3A c1
 """
@@ -17,7 +16,7 @@ import subprocess
 
 import radiusd
 
-p = (('User-Name', '"alwaysdeone@gmail.com"'), ('User-Password', '"12345"'), ('NAS-IP-Address', '192.168.8.102'), ('NAS-Port', '0'), ('Message-Authenticator', '0x7edbbcb48daa747ef293a0ba548c1f6c'))
+p = (('Acct-Session-Id', '"624874448299458941"'), ('Called-Station-Id', '"00-18-0A-F2-DE-20:Radius test"'), ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'), ('Framed-IP-Address', '172.31.3.142'), ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'), ('NAS-IP-Address', '108.161.147.120'), ('NAS-Port', '0'), ('NAS-Port-Id', '"Wireless-802.11"'), ('NAS-Port-Type', 'Wireless-802.11'), ('Service-Type', 'Login-User'), ('User-Name', '"alwaysdeone@gmail.com"'), ('User-Password', '"12345"'), ('Attr-26.29671.1', '0x446a756e676c65204851203032'))
 
 def make_env():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
@@ -30,10 +29,9 @@ def make_env():
         sys.path.insert(1, "/root/billing/lib/python2.7/site-packages")
         sys.path.insert(1, "/root/billing/billing")
 
-def get_user(p):
+def get_user(params):
     make_env()
     from django.contrib.auth.models import User
-    params = dict(p)
     username = params['User-Name'][1:-1]
     return User.objects.get(username__exact=username)
 
@@ -48,7 +46,9 @@ def authorize(p):
     # print
     # print p
     # return radiusd.RLM_MODULE_OK
-    user = get_user(p)
+    params = dict(p)
+    user = get_user(params)
+    # called_station_id = params['']
 
     if user.is_active:
         return (radiusd.RLM_MODULE_OK,
