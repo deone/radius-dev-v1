@@ -5,6 +5,10 @@
 #
 # $Id: dd5b0b88243ea2919634d1ae519f5825f0560c93 $
 
+"""
+(('Acct-Session-Id', '"624874448299458941"'), ('Called-Station-Id', '"00-18-0A-F2-DE-20:Radius test"'), ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'), ('Framed-IP-Address', '172.31.3.142'), ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'), ('NAS-IP-Address', '108.161.147.120'), ('NAS-Port', '0'), ('NAS-Port-Id', '"Wireless-802.11"'), ('NAS-Port-Type', 'Wireless-802.11'), ('Service-Type', 'Login-User'), ('User-Name', '"herbertellisspectradjungle@spectrawireless.com"'), ('User-Password', '"123456"'), ('Attr-26.29671.1', '0x446a756e676c65204851203032'))
+"""
+
 import os
 import sys
 import subprocess
@@ -47,7 +51,8 @@ def authorize(p):
     if user.is_active:
         return radiusd.RLM_MODULE_OK
     else:
-        return radiusd.RLM_MODULE_REJECT
+        return (radiusd.RLM_MODULE_REJECT,
+            (('Reply-Message', 'User De-activated'),), (('Auth-Type', 'python'),))
 
 def preacct(p):
   print "*** preacct ***"
