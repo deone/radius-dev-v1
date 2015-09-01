@@ -49,7 +49,8 @@ def authorize(p):
     user = get_user(p)
 
     if user.is_active:
-        return radiusd.RLM_MODULE_OK
+        return (radiusd.RLM_MODULE_OK,
+            (('Session-Timeout', '3600'),), (('Auth-Type', 'python'),))
     else:
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'User De-activated'),), (('Auth-Type', 'python'),))
