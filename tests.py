@@ -14,13 +14,13 @@ class AuthorizeTestCase(unittest.TestCase):
 
     def test_success(self):
         result = rules.authorize(self.p)
-        self.assertEqual(result, 2)
+        self.assertEqual(result, (2, (('Session-Timeout', '3600'),), (('Auth-Type', 'python'),)))
 
     def test_fail(self):
         self.user.is_active = False
         self.user.save()
         result = rules.authorize(self.p)
-        self.assertEqual(result, 0)
+        self.assertEqual(result, (0, (('Reply-Message', 'User De-activated'),), (('Auth-Type', 'python'),)))
 
 suite = unittest.TestSuite([AuthorizeTestCase('test_success'), AuthorizeTestCase('test_fail')])
 

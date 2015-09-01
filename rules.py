@@ -7,6 +7,8 @@
 
 """
 (('Acct-Session-Id', '"624874448299458941"'), ('Called-Station-Id', '"00-18-0A-F2-DE-20:Radius test"'), ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'), ('Framed-IP-Address', '172.31.3.142'), ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'), ('NAS-IP-Address', '108.161.147.120'), ('NAS-Port', '0'), ('NAS-Port-Id', '"Wireless-802.11"'), ('NAS-Port-Type', 'Wireless-802.11'), ('Service-Type', 'Login-User'), ('User-Name', '"herbertellisspectradjungle@spectrawireless.com"'), ('User-Password', '"123456"'), ('Attr-26.29671.1', '0x446a756e676c65204851203032'))
+00 %3A 18 %3A 0a %3A f2 %3A de %3A 20
+48 %3A d2 %3A 24 %3A 43 %3A a6 %3A c1
 """
 
 import os
@@ -50,7 +52,7 @@ def authorize(p):
 
     if user.is_active:
         return (radiusd.RLM_MODULE_OK,
-            (('Session-Timeout', '3600'),), (('Auth-Type', 'python'),))
+            (('Session-Timeout', '120'),), (('Auth-Type', 'python'),))
     else:
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'User De-activated'),), (('Auth-Type', 'python'),))
