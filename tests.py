@@ -33,7 +33,6 @@ class AuthorizeTestCase(unittest.TestCase):
         self.assertEqual(result, (2, (('Session-Timeout', '120'),), (('Auth-Type', 'python'),)))
 
     def test_ap_knows_subscriber(self):
-        self.ap.status = 'PRV'
         self.ap.group = self.user.subscriber.group = self.group1
         self.ap.save()
         self.user.subscriber.save()
@@ -41,7 +40,6 @@ class AuthorizeTestCase(unittest.TestCase):
         self.assertEqual(result, (2, (('Session-Timeout', '120'),), (('Auth-Type', 'python'),)))
 
     def test_ap_unknows_subscriber(self):
-        self.ap.status = 'PRV'
         self.ap.group = self.group1
         self.user.subscriber.group = self.group2
         result = rules.authorize(self.p)
