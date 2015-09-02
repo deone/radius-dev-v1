@@ -29,11 +29,25 @@ def make_env():
         sys.path.insert(1, "/root/billing/lib/python2.7/site-packages")
         sys.path.insert(1, "/root/billing/billing")
 
-def get_user(params):
+    import django
+    django.setup()
+
+def get_user(username):
     make_env()
     from django.contrib.auth.models import User
-    username = params['User-Name'][1:-1]
     return User.objects.get(username__exact=username)
+
+def get_ap(mac):
+    make_env()
+    from accounts.models import AccessPoint
+    return AccessPoint.objects.get(mac_address__exact=mac)
+
+def create_mac(param):
+    called_station_id = trim_value(param).split(':')[0]
+    return called_station_id.replace('-', ':')
+
+def trim_value(val):
+    return val[1:-1]
 
 def instantiate(p):
     print "*** instantiate ***"
@@ -47,12 +61,19 @@ def authorize(p):
     # print p
     # return radiusd.RLM_MODULE_OK
     params = dict(p)
-    user = get_user(params)
-    # called_station_id = params['']
+    username = trim_value(params['User-Name'])
+    ap_mac = create_mac(params['Called-Station-Id'])
+
+    user = get_user(username)
+    ap = get_ap(ap_mac)
 
     if user.is_active:
-        return (radiusd.RLM_MODULE_OK,
-            (('Session-Timeout', '120'),), (('Auth-Type', 'python'),))
+        if ap.allows(user):
+            return (radiusd.RLM_MODULE_OK,
+                (('Session-Timeout', '120'),), (('Auth-Type', 'python'),))
+        else:
+            return (radiusd.RLM_MODULE_REJECT,
+                (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),))
     else:
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'User De-activated'),), (('Auth-Type', 'python'),))
