@@ -18,9 +18,11 @@ class AuthorizeTestCase(unittest.TestCase):
 
         from django.contrib.auth.models import User
         from accounts.models import Subscriber, AccessPoint, GroupAccount
+        from packages.models import Package
 
-        self.group1 = GroupAccount.objects.create(name='CUG', max_user_quantity=10)
-        self.group2 = GroupAccount.objects.create(name='LUG', max_user_quantity=10)
+        self.package = Package.objects.create(package_type='Daily', volume='3', speed='1.5')
+        self.group1 = GroupAccount.objects.create(name='CUG', package=self.package, max_no_of_users=10)
+        self.group2 = GroupAccount.objects.create(name='LUG', package=self.package, max_no_of_users=10)
         self.ap = AccessPoint.objects.create(name='Djungle HQ 02', mac_address=ap_mac)
         self.user = User.objects.create_user(username, username, password)
 
