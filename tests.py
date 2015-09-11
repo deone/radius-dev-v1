@@ -35,13 +35,9 @@ class AuthorizeTestCase(unittest.TestCase):
         self.gps = GroupPackageSubscription.objects.create(group=self.group1, package=p, start=now,
             stop=now + timedelta(hours=settings.PACKAGE_TYPES_HOURS_MAP[p.package_type]))
 
-    """ AP Status/Subscriber Type/Subscription Status Tests """
-
+    """ Start AP Status/Group Subscriber/Subscription Status Tests """
+    
     # 1. Private AP no group - default
-
-    # - Individual subscriber.
-    def test_private_ap_no_group_individual_subscriber(self):
-        pass
 
     # - Group subscriber.
     def test_private_ap_no_group_group_subscriber(self):
@@ -50,9 +46,7 @@ class AuthorizeTestCase(unittest.TestCase):
 
 
     # 2. Private AP belonging to group
-
-    # - Individual subscriber
-
+    
     # - Group subscriber. Same group as AP. Valid group subscription.
     def test_private_ap_subscriber_same_group_and_group_subscription_valid(self):
         self.ap.group = self.user.subscriber.group = self.group1
@@ -63,8 +57,8 @@ class AuthorizeTestCase(unittest.TestCase):
         self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),)))
 
     # - Group subscriber. Same group as AP. Invalid group subscription.
-    def test_private_ap_subscriber_same_group_and_group_subscription_invalid(self):
-        pass
+    """ def test_private_ap_subscriber_same_group_and_group_subscription_invalid(self):
+        pass """
 
     # - Group subscriber. Different group.
     def test_private_ap_subscriber_different_groups(self):
@@ -75,17 +69,6 @@ class AuthorizeTestCase(unittest.TestCase):
 
 
     # 3. Public AP
-
-    # - Individual subscriber. Valid subscription.
-    """ def test_public_ap_individual_subscriber_subscription_valid(self):
-        self.ap.status = 'PUB'
-        self.ap.save()
-        result = rules.authorize(self.p)
-        self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),))) """
-
-    # - Individual subscriber. Invalid subscription.
-    def test_public_ap_individual_subscriber_subscription_invalid(self):
-        pass
 
     # - Group subscriber. Valid group subscription.
     def test_public_ap_group_subscriber_group_subscription_valid(self):
@@ -98,10 +81,41 @@ class AuthorizeTestCase(unittest.TestCase):
         self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),)))
 
     # - Group subscriber. Invalid group subscription.
-    def test_public_ap_group_subscriber_group_subscription_invalid(self):
-        pass
+    """ def test_public_ap_group_subscriber_group_subscription_invalid(self):
+        pass """
 
-    """ End AP Status/Subscriber Type/Subscription Status Tests """
+    """ End AP Status/Group Subscriber/Subscription Status Tests """
+
+
+    """ Start AP Status/Individual Subscriber/Subscription Status Tests """
+
+    # 1. Private AP no group - default
+
+    # - Individual subscriber.
+    """ def test_private_ap_no_group_individual_subscriber(self):
+        pass """
+
+
+    # 2. Private AP belonging to group
+
+    # - Individual subscriber
+    """ """
+
+
+    # 3. Public AP
+
+    # - Individual subscriber. Valid subscription.
+    """ def test_public_ap_individual_subscriber_subscription_valid(self):
+        self.ap.status = 'PUB'
+        self.ap.save()
+        result = rules.authorize(self.p)
+        self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),))) """
+
+    # - Individual subscriber. Invalid subscription.
+    """ def test_public_ap_individual_subscriber_subscription_invalid(self):
+        pass """
+
+    """ End AP Status/Individual Subscriber/Subscription Status Tests """
 
     def test_user_is_inactive(self):
         self.user.is_active = False
