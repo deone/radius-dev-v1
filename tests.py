@@ -54,7 +54,7 @@ class AuthorizeTestCase(unittest.TestCase):
         self.user.subscriber.save()
 
         result = rules.authorize(self.p)
-        self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),)))
+        self.assertEqual(result[0], 2)
 
     # - Group subscriber. Same group as AP. Invalid group subscription.
     """ def test_private_ap_subscriber_same_group_and_group_subscription_invalid(self):
@@ -78,7 +78,7 @@ class AuthorizeTestCase(unittest.TestCase):
         self.user.subscriber.save()
         
         result = rules.authorize(self.p)
-        self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),)))
+        self.assertEqual(result[0], 2)
 
     # - Group subscriber. Invalid group subscription.
     """ def test_public_ap_group_subscriber_group_subscription_invalid(self):

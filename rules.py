@@ -69,6 +69,9 @@ def authorize(p):
     # print
     # print p
     # return radiusd.RLM_MODULE_OK
+    make_env()
+    from django.utils import timezone
+
     params = dict(p)
     username = trim_value(params['User-Name'])
     ap_mac = create_mac(params['Called-Station-Id'])
@@ -80,8 +83,9 @@ def authorize(p):
         if ap.allows(user):
             subscription = get_subscription(user)
             if subscription.is_valid():
+                now = timezone.now()
                 return (radiusd.RLM_MODULE_OK,
-                    (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),))
+                    (('Session-Timeout', (subscription.stop - now).seconds),), (('Auth-Type', 'python'),))
             else:
                 return (radiusd.RLM_MODULE_REJECT,
                     (('Reply-Message', 'Subscription Expired'),), (('Auth-Type', 'python'),))
