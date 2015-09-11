@@ -18,11 +18,9 @@ class AuthorizeTestCase(unittest.TestCase):
 
         from django.contrib.auth.models import User
         from accounts.models import Subscriber, AccessPoint, GroupAccount
-        from packages.models import Package
 
-        self.package = Package.objects.create(package_type='Daily', volume='3', speed='1.5')
-        self.group1 = GroupAccount.objects.create(name='CUG', package=self.package, max_no_of_users=10)
-        self.group2 = GroupAccount.objects.create(name='LUG', package=self.package, max_no_of_users=10)
+        self.group1 = GroupAccount.objects.create(name='CUG', max_no_of_users=10)
+        self.group2 = GroupAccount.objects.create(name='LUG', max_no_of_users=10)
         self.ap = AccessPoint.objects.create(name='Djungle HQ 02', mac_address=ap_mac)
         self.user = User.objects.create_user(username, username, password)
 
@@ -32,14 +30,14 @@ class AuthorizeTestCase(unittest.TestCase):
         self.ap.status = 'PUB'
         self.ap.save()
         result = rules.authorize(self.p)
-        self.assertEqual(result, (2, (('Session-Timeout', '120'),), (('Auth-Type', 'python'),)))
+        self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),)))
 
     def test_ap_knows_subscriber(self):
         self.ap.group = self.user.subscriber.group = self.group1
         self.ap.save()
         self.user.subscriber.save()
         result = rules.authorize(self.p)
-        self.assertEqual(result, (2, (('Session-Timeout', '120'),), (('Auth-Type', 'python'),)))
+        self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),)))
 
     def test_ap_unknows_subscriber(self):
         self.ap.group = self.group1

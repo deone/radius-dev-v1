@@ -70,7 +70,14 @@ def authorize(p):
     if user.is_active:
         if ap.allows(user):
             return (radiusd.RLM_MODULE_OK,
-                (('Session-Timeout', '120'),), (('Auth-Type', 'python'),))
+                    (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),))
+            """ print user
+            subscription = user.subscriber.group.grouppackagesubscription_set.all()[0]
+            if subscription.is_valid():
+
+            else:
+                return (radiusd.RLM_MODULE_REJECT,
+                    (('Reply-Message', 'Subscription Expired'),), (('Auth-Type', 'python'),)) """
         else:
             return (radiusd.RLM_MODULE_REJECT,
                 (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),))
