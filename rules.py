@@ -84,8 +84,10 @@ def authorize(p):
             subscription = get_subscription(user)
             if subscription.is_valid():
                 now = timezone.now()
+                package_period = str(subscription.stop - now).total_seconds()
+                package_period = package_period.split(".")[0]
                 return (radiusd.RLM_MODULE_OK,
-                    (('Session-Timeout', (subscription.stop - now).total_seconds),), (('Auth-Type', 'python'),))
+                    (('Session-Timeout', package_period),), (('Auth-Type', 'python'),))
             else:
                 return (radiusd.RLM_MODULE_REJECT,
                     (('Reply-Message', 'Subscription Expired'),), (('Auth-Type', 'python'),))
