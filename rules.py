@@ -49,6 +49,15 @@ def create_mac(param):
 def trim_value(val):
     return val[1:-1]
 
+def get_subscription(user):
+    if user.subscriber.group is not None:
+        # User belongs to a group. Return group package subscription
+        subscription = user.subscriber.group.grouppackagesubscription_set.all()[0]
+    else:
+        subscription = user.subscriber.packagesubscription_set.all()[0]
+
+    return subscription
+
 def instantiate(p):
     print "*** instantiate ***"
     print p
@@ -69,15 +78,13 @@ def authorize(p):
 
     if user.is_active:
         if ap.allows(user):
-            return (radiusd.RLM_MODULE_OK,
-                    (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),))
-            """ print user
-            subscription = user.subscriber.group.grouppackagesubscription_set.all()[0]
+            subscription = get_subscription(user)
             if subscription.is_valid():
-
+                return (radiusd.RLM_MODULE_OK,
+                    (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),))
             else:
                 return (radiusd.RLM_MODULE_REJECT,
-                    (('Reply-Message', 'Subscription Expired'),), (('Auth-Type', 'python'),)) """
+                    (('Reply-Message', 'Subscription Expired'),), (('Auth-Type', 'python'),))
         else:
             return (radiusd.RLM_MODULE_REJECT,
                 (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),))

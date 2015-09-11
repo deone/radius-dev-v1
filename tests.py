@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import unittest
+from datetime import timedelta
 
 import rules 
 
@@ -16,8 +17,11 @@ class AuthorizeTestCase(unittest.TestCase):
 
         rules.make_env()
 
+        from django.utils import timezone
         from django.contrib.auth.models import User
+        from django.conf import settings
         from accounts.models import Subscriber, AccessPoint, GroupAccount
+        from packages.models import Package, GroupPackageSubscription
 
         self.group1 = GroupAccount.objects.create(name='CUG', max_no_of_users=10)
         self.group2 = GroupAccount.objects.create(name='LUG', max_no_of_users=10)
@@ -26,28 +30,78 @@ class AuthorizeTestCase(unittest.TestCase):
 
         Subscriber.objects.create(user=self.user, country='NGA', phone_number='+233542751610')
 
-    def test_ap_public(self):
-        self.ap.status = 'PUB'
-        self.ap.save()
-        result = rules.authorize(self.p)
-        self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),)))
+        now = timezone.now()
+        p = Package.objects.all()[0]
+        self.gps = GroupPackageSubscription.objects.create(group=self.group1, package=p, start=now,
+            stop=now + timedelta(hours=settings.PACKAGE_TYPES_HOURS_MAP[p.package_type]))
 
-    def test_ap_knows_subscriber(self):
+    """ AP Status/Subscriber Type/Subscription Status Tests """
+
+    # 1. Private AP no group - default
+
+    # - Individual subscriber.
+    def test_private_ap_no_group_individual_subscriber(self):
+        pass
+
+    # - Group subscriber.
+    def test_private_ap_no_group_group_subscriber(self):
+        result = rules.authorize(self.p)
+        self.assertEqual(result, (0, (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),)))
+
+
+    # 2. Private AP belonging to group
+
+    # - Individual subscriber
+
+    # - Group subscriber. Same group as AP. Valid group subscription.
+    def test_private_ap_subscriber_same_group_and_group_subscription_valid(self):
         self.ap.group = self.user.subscriber.group = self.group1
         self.ap.save()
         self.user.subscriber.save()
+
         result = rules.authorize(self.p)
         self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),)))
 
-    def test_ap_unknows_subscriber(self):
+    # - Group subscriber. Same group as AP. Invalid group subscription.
+    def test_private_ap_subscriber_same_group_and_group_subscription_invalid(self):
+        pass
+
+    # - Group subscriber. Different group.
+    def test_private_ap_subscriber_different_groups(self):
         self.ap.group = self.group1
         self.user.subscriber.group = self.group2
         result = rules.authorize(self.p)
         self.assertEqual(result, (0, (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),)))
 
-    def test_ap_is_private(self):
+
+    # 3. Public AP
+
+    # - Individual subscriber. Valid subscription.
+    """ def test_public_ap_individual_subscriber_subscription_valid(self):
+        self.ap.status = 'PUB'
+        self.ap.save()
         result = rules.authorize(self.p)
-        self.assertEqual(result, (0, (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),)))
+        self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),))) """
+
+    # - Individual subscriber. Invalid subscription.
+    def test_public_ap_individual_subscriber_subscription_invalid(self):
+        pass
+
+    # - Group subscriber. Valid group subscription.
+    def test_public_ap_group_subscriber_group_subscription_valid(self):
+        self.ap.status = 'PUB'
+        self.ap.save()
+        self.user.subscriber.group = self.group1
+        self.user.subscriber.save()
+        
+        result = rules.authorize(self.p)
+        self.assertEqual(result, (2, (('Session-Timeout', '7200'),), (('Auth-Type', 'python'),)))
+
+    # - Group subscriber. Invalid group subscription.
+    def test_public_ap_group_subscriber_group_subscription_invalid(self):
+        pass
+
+    """ End AP Status/Subscriber Type/Subscription Status Tests """
 
     def test_user_is_inactive(self):
         self.user.is_active = False
@@ -60,6 +114,7 @@ class AuthorizeTestCase(unittest.TestCase):
         self.group1.delete()
         self.group2.delete()
         self.user.delete()
+        self.gps.delete()
 
 # suite = unittest.TestSuite([AuthorizeTestCase('test_success'), AuthorizeTestCase('test_fail')])
 
