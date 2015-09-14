@@ -64,11 +64,6 @@ def instantiate(p):
 
 def authorize(p):
     print "*** authorize ***"
-    # print
-    # radiusd.radlog(radiusd.L_INFO, '*** radlog call in authorize ***')
-    # print
-    # print p
-    # return radiusd.RLM_MODULE_OK
     make_env()
     from django.utils import timezone
 
@@ -77,12 +72,17 @@ def authorize(p):
     ap_mac = create_mac(params['Called-Station-Id'])
 
     user = get_user(username)
+    print user
     ap = get_ap(ap_mac)
+    print ap
 
     if user.is_active:
+        radiusd.radlog(radiusd.L_INFO, '*** User is active ***')
         if ap.allows(user):
+            radiusd.radlog(radiusd.L_INFO, '*** AP allowed user ***')
             subscription = get_subscription(user)
             if subscription.is_valid():
+                radiusd.radlog(radiusd.L_INFO, '*** User subscription valid ***')
                 now = timezone.now()
                 package_period = str((subscription.stop - now).total_seconds())
                 package_period = package_period.split(".")[0]
