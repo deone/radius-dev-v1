@@ -20,14 +20,6 @@ p = (('Acct-Session-Id', '"624874448299458941"'), ('Called-Station-Id', '"00-18-
 
 def make_env():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
-    hostname = subprocess.check_output('hostname')[:-1]
-
-    if not hostname.startswith('billing'):
-        sys.path.insert(1, "/Users/deone/src/billing/lib/python2.7/site-packages")
-        sys.path.insert(1, "/Users/deone/src/billing/billing")
-    else:
-        sys.path.insert(1, "/root/billing/lib/python2.7/site-packages")
-        sys.path.insert(1, "/root/billing/billing")
 
     import django
     django.setup()
