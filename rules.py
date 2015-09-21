@@ -79,7 +79,7 @@ def authorize(p):
                 package_period = str((subscription.stop - now).total_seconds())
                 package_period = package_period.split(".")[0]
                 return (radiusd.RLM_MODULE_OK,
-                    (('Session-Timeout', package_period),), (('Maximum-Data-Rate-Upstream', '1000000'),), (('Maximum-Data-Rate-Downstream', '1000000'),))
+                    (('Session-Timeout', package_period),), (('Maximum-Data-Rate-Upstream', '1500000'),), (('Maximum-Data-Rate-Downstream', '1500000'),))
             else:
                 return (radiusd.RLM_MODULE_REJECT,
                     (('Reply-Message', 'Subscription Expired'),), (('Auth-Type', 'python'),))
