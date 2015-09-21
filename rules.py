@@ -64,9 +64,7 @@ def authorize(p):
     ap_mac = create_mac(params['Called-Station-Id'])
 
     user = get_user(username)
-    print user
     ap = get_ap(ap_mac)
-    print ap
 
     if user.is_active:
         radiusd.radlog(radiusd.L_INFO, '*** User is active ***')
@@ -76,10 +74,16 @@ def authorize(p):
             if subscription.is_valid():
                 radiusd.radlog(radiusd.L_INFO, '*** User subscription valid ***')
                 now = timezone.now()
+
                 package_period = str((subscription.stop - now).total_seconds())
                 package_period = package_period.split(".")[0]
+
+                bandwidth_limit = str(float(subscription.package.speed) * 1000000)
+                bandwidth_limit = bandwidth_limit.split('.')[0]
+                
                 return (radiusd.RLM_MODULE_OK,
-                    (('Session-Timeout', package_period),), (('Maximum-Data-Rate-Upstream', '1500000'),), (('Maximum-Data-Rate-Downstream', '1500000'),))
+                    (('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
+                    (('Auth-Type', 'python'),))
             else:
                 return (radiusd.RLM_MODULE_REJECT,
                     (('Reply-Message', 'Subscription Expired'),), (('Auth-Type', 'python'),))
