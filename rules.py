@@ -16,7 +16,7 @@ import subprocess
 
 import radiusd
 
-p = (('Acct-Session-Id', '"624874448299458941"'), ('Called-Station-Id', '"00-18-0A-F2-DE-20:Radius test"'), ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'), ('Framed-IP-Address', '172.31.3.142'), ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'), ('NAS-IP-Address', '108.161.147.120'), ('NAS-Port', '0'), ('NAS-Port-Id', '"Wireless-802.11"'), ('NAS-Port-Type', 'Wireless-802.11'), ('Service-Type', 'Login-User'), ('User-Name', '"alwaysdeone@gmail.com"'), ('User-Password', '"12345"'), ('Attr-26.29671.1', '0x446a756e676c65204851203032'))
+p = (('Acct-Session-Id', '"624874448299458941"'), ('Called-Station-Id', '"00-18-0A-F2-DE-20:Radius test"'), ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'), ('Framed-IP-Address', '172.31.3.142'), ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'), ('NAS-IP-Address', '108.161.147.120'), ('NAS-Port', '0'), ('NAS-Port-Id', '"Wireless-802.11"'), ('NAS-Port-Type', 'Wireless-802.11'), ('Service-Type', 'Login-User'), ('User-Name', '"erica.nortey420140943@koforiduapoly.edu.gh"'), ('User-Password', '"SH9G3I"'),  ('Attr-26.29671.1', '0x446a756e676c65204851203032'))
 
 def make_env():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
@@ -55,16 +55,26 @@ def instantiate(p):
     print p
 
 def authorize(p):
-    print "*** authorize ***"
+    radiusd.radlog(radiusd.L_INFO, "*** authorize ***")
+    radiusd.radlog(radiusd.L_INFO, "*** Request Content: " + str(p) + " ***")
+    radiusd.radlog(radiusd.L_INFO, "*** Setting up env and importing Django ***")
     make_env()
+    radiusd.radlog(radiusd.L_INFO, "*** Django imported successfully ***")
+
     from django.utils import timezone
+    radiusd.radlog(radiusd.L_INFO, "*** Timezone module imported successfully ***")
 
     params = dict(p)
+    radiusd.radlog(radiusd.L_INFO, "*** Request Content Dictionary: " + str(params) + " ***")
+
     username = trim_value(params['User-Name'])
     ap_mac = create_mac(params['Called-Station-Id'])
 
     user = get_user(username)
+    radiusd.radlog(radiusd.L_INFO, '*** User fetched successfully: ' + user.username + ' ***')
+
     ap = get_ap(ap_mac)
+    radiusd.radlog(radiusd.L_INFO, '*** AP fetched successfully: ' + ap.mac_address + ' ***')
 
     if user.is_active:
         radiusd.radlog(radiusd.L_INFO, '*** User is active ***')
