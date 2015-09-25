@@ -5,14 +5,8 @@
 #
 # $Id: dd5b0b88243ea2919634d1ae519f5825f0560c93 $
 
-"""
-00 %3A 18 %3A 0a %3A f2 %3A de %3A 20
-48 %3A d2 %3A 24 %3A 43 %3A a6 %3A c1
-"""
-
 import os
 import sys
-import subprocess
 
 import radiusd
 
@@ -103,59 +97,6 @@ def authorize(p):
     else:
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'User De-activated'),), (('Auth-Type', 'python'),))
-
-def preacct(p):
-  print "*** preacct ***"
-  print p
-  return radiusd.RLM_MODULE_OK
-
-def accounting(p):
-  print "*** accounting ***"
-  radiusd.radlog(radiusd.L_INFO, '*** radlog call in accounting (0) ***')
-  print
-  print p
-  return radiusd.RLM_MODULE_OK
-
-def pre_proxy(p):
-  print "*** pre_proxy ***"
-  print p
-  return radiusd.RLM_MODULE_OK
-
-def post_proxy(p):
-  print "*** post_proxy ***"
-  print p
-  return radiusd.RLM_MODULE_OK
-
-def post_auth(p):
-  print "*** post_auth ***"
-  print p
-  return radiusd.RLM_MODULE_OK
-
-def recv_coa(p):
-  print "*** recv_coa ***"
-  print p
-  return radiusd.RLM_MODULE_OK
-
-def authenticate(p):
-  print "*** recv_coa ***"
-  print p
-  return radiusd.RLM_MODULE_OK
-
-def checksimul(p):
-  print "*** recv_coa ***"
-  print p
-  return radiusd.RLM_MODULE_OK
-
-def send_coa(p):
-  print "*** send_coa ***"
-  print p
-  return radiusd.RLM_MODULE_OK
-
-
-def detach():
-  print "*** goodbye from example.py ***"
-  return radiusd.RLM_MODULE_OK
-
 
 if __name__ == "__main__":
     a = authorize(p)
