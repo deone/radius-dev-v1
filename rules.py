@@ -1,26 +1,34 @@
 #! /usr/bin/env python
 
 import os
-import sys
 
 import radiusd
 
+radiusd.radlog(radiusd.L_INFO, "*** Setting settings module ***")
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
+
+radiusd.radlog(radiusd.L_INFO, "*** Settings module set successfully ***")
+
+
+radiusd.radlog(radiusd.L_INFO, "*** Importing and setting up Django elements ***")
+
+import django
+django.setup()
+
+from django.contrib.auth.models import User
+from django.utils import timezone
+from accounts.models import AccessPoint
+
+radiusd.radlog(radiusd.L_INFO, "*** Django elements imported and set up successfully ***")
+
+
 p = (('Acct-Session-Id', '"624874448299458941"'), ('Called-Station-Id', '"00-18-0A-F2-DE-20:Radius test"'), ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'), ('Framed-IP-Address', '172.31.3.142'), ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'), ('NAS-IP-Address', '108.161.147.120'), ('NAS-Port', '0'), ('NAS-Port-Id', '"Wireless-802.11"'), ('NAS-Port-Type', 'Wireless-802.11'), ('Service-Type', 'Login-User'), ('User-Name', '"erica.nortey420140943@koforiduapoly.edu.gh"'), ('User-Password', '"SH9G3I"'),  ('Attr-26.29671.1', '0x446a756e676c65204851203032'))
 
-def make_env():
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
-
-    import django
-    django.setup()
-
 def get_user(username):
-    make_env()
-    from django.contrib.auth.models import User
     return User.objects.get(username__exact=username)
 
 def get_ap(mac):
-    make_env()
-    from accounts.models import AccessPoint
     return AccessPoint.objects.get(mac_address__exact=mac)
 
 def create_mac(param):
@@ -46,15 +54,8 @@ def instantiate(p):
 def authorize(p):
     radiusd.radlog(radiusd.L_INFO, "*** authorize ***")
     radiusd.radlog(radiusd.L_INFO, "*** Request Content: " + str(p) + " ***")
-    radiusd.radlog(radiusd.L_INFO, "*** Setting up env and importing Django ***")
-    make_env()
-    radiusd.radlog(radiusd.L_INFO, "*** Django imported successfully ***")
-
-    from django.utils import timezone
-    radiusd.radlog(radiusd.L_INFO, "*** Timezone module imported successfully ***")
 
     params = dict(p)
-    radiusd.radlog(radiusd.L_INFO, "*** Request Content Dictionary: " + str(params) + " ***")
 
     username = trim_value(params['User-Name'])
     ap_mac = create_mac(params['Called-Station-Id'])
