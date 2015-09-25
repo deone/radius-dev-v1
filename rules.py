@@ -1,9 +1,4 @@
 #! /usr/bin/env python
-#
-# Python module example file
-# Miguel A.L. Paraz <mparaz@mparaz.com>
-#
-# $Id: dd5b0b88243ea2919634d1ae519f5825f0560c93 $
 
 import os
 import sys
@@ -89,12 +84,15 @@ def authorize(p):
                     (('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
                     (('Auth-Type', 'python'),))
             else:
+                radiusd.radlog(radiusd.L_INFO, '*** User subscription invalid ***')
                 return (radiusd.RLM_MODULE_REJECT,
-                    (('Reply-Message', 'Subscription Expired'),), (('Auth-Type', 'python'),))
+                    (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
         else:
+            radiusd.radlog(radiusd.L_INFO, '*** AP disallowed user ***')
             return (radiusd.RLM_MODULE_REJECT,
                 (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),))
     else:
+        radiusd.radlog(radiusd.L_INFO, '*** User is inactive ***')
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'User De-activated'),), (('Auth-Type', 'python'),))
 
