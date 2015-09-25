@@ -1,25 +1,21 @@
 #! /usr/bin/env python
 
 import os
-
 import radiusd
 
+
 radiusd.radlog(radiusd.L_INFO, "*** Setting settings module ***")
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
-
 radiusd.radlog(radiusd.L_INFO, "*** Settings module set successfully ***")
 
 
 radiusd.radlog(radiusd.L_INFO, "*** Importing and setting up Django elements ***")
-
 import django
 django.setup()
 
 from django.contrib.auth.models import User
 from django.utils import timezone
 from accounts.models import AccessPoint
-
 radiusd.radlog(radiusd.L_INFO, "*** Django elements imported and set up successfully ***")
 
 
@@ -48,8 +44,7 @@ def get_subscription(user):
     return subscription
 
 def instantiate(p):
-    print "*** instantiate ***"
-    print p
+    radiusd.radlog(radiusd.L_INFO, '*** Instantiating Python module ***')
 
 def authorize(p):
     radiusd.radlog(radiusd.L_INFO, "*** authorize ***")
@@ -81,6 +76,7 @@ def authorize(p):
                 bandwidth_limit = str(float(subscription.package.speed) * 1000000)
                 bandwidth_limit = bandwidth_limit.split('.')[0]
                 
+                radiusd.radlog(radiusd.L_INFO, '*** Sending Access-Accept to Meraki ***')
                 return (radiusd.RLM_MODULE_OK,
                     (('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
                     (('Auth-Type', 'python'),))
