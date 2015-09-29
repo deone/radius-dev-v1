@@ -6,7 +6,7 @@ import radiusd
 
 radiusd.radlog(radiusd.L_INFO, "*** Setting settings module ***")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing.settings")
-radiusd.radlog(radiusd.L_INFO, "*** Settings module set successfully ***")
+radiusd.radlog(radiusd.L_INFO, "*** - Settings module set successfully ***")
 
 
 radiusd.radlog(radiusd.L_INFO, "*** Importing and setting up Django elements ***")
@@ -16,7 +16,7 @@ django.setup()
 from django.contrib.auth.models import User
 from django.utils import timezone
 from accounts.models import AccessPoint
-radiusd.radlog(radiusd.L_INFO, "*** Django elements imported and set up successfully ***")
+radiusd.radlog(radiusd.L_INFO, "*** - Django elements imported and set up successfully ***")
 
 
 p = (
@@ -61,7 +61,6 @@ def instantiate(p):
     radiusd.radlog(radiusd.L_INFO, '*** Instantiating Python module ***')
 
 def authorize(p):
-    radiusd.radlog(radiusd.L_INFO, "*** authorize ***")
     radiusd.radlog(radiusd.L_INFO, "*** Request Content: " + str(p) + " ***")
 
     params = dict(p)
@@ -78,14 +77,14 @@ def authorize(p):
     else:
         radiusd.radlog(radiusd.L_INFO, '*** - User fetched successfully: ' + user.username + ' ***')
 
-    radiusd.radlog(radiusd.L_INFO, '*** Fetching AP ... ***')
+    radiusd.radlog(radiusd.L_INFO, '*** Fetching AP... ***')
     ap = get_ap(ap_mac)
     radiusd.radlog(radiusd.L_INFO, '*** - AP fetched successfully: ' + ap.mac_address + ' ***')
 
     # Check Password
     password = trim_value(params['User-Password'])
     
-    radiusd.radlog(radiusd.L_INFO, '*** Checking Password ... ***')
+    radiusd.radlog(radiusd.L_INFO, '*** Checking Password... ***')
     if user.check_password(password):
         radiusd.radlog(radiusd.L_INFO, '*** - Password Correct! ***')
     else:
@@ -94,7 +93,7 @@ def authorize(p):
             (('Reply-Message', 'Password Incorrect'),), (('Auth-Type', 'python'),))
 
     # Check User Account Status
-    radiusd.radlog(radiusd.L_INFO, '*** Checking User Account Status ... ***')
+    radiusd.radlog(radiusd.L_INFO, '*** Checking User Account Status... ***')
     if user.is_active:
         radiusd.radlog(radiusd.L_INFO, '*** - User Account Active ***')
     else:
@@ -103,7 +102,7 @@ def authorize(p):
             (('Reply-Message', 'User Inactive'),), (('Auth-Type', 'python'),))
 
     # Check whether AP allows user
-    radiusd.radlog(radiusd.L_INFO, '*** AP Checking User Eligibility ... ***')
+    radiusd.radlog(radiusd.L_INFO, '*** AP Checking User Eligibility... ***')
     if ap.allows(user):
         radiusd.radlog(radiusd.L_INFO, '*** - AP Allowed User ***')
     else:
@@ -130,6 +129,7 @@ def authorize(p):
             (('Auth-Type', 'python'),))
     else:
         radiusd.radlog(radiusd.L_INFO, '*** - User Subscription Invalid ***')
+        radiusd.radlog(radiusd.L_INFO, '*** - Sending Access-Reject to Meraki ***')
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
 
