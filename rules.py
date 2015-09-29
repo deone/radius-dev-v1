@@ -19,7 +19,21 @@ from accounts.models import AccessPoint
 radiusd.radlog(radiusd.L_INFO, "*** Django elements imported and set up successfully ***")
 
 
-p = (('Acct-Session-Id', '"624874448299458941"'), ('Called-Station-Id', '"00-18-0A-F2-DE-20:Radius test"'), ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'), ('Framed-IP-Address', '172.31.3.142'), ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'), ('NAS-IP-Address', '108.161.147.120'), ('NAS-Port', '0'), ('NAS-Port-Id', '"Wireless-802.11"'), ('NAS-Port-Type', 'Wireless-802.11'), ('Service-Type', 'Login-User'), ('User-Name', '"erica.nortey420140943@koforiduapoly.edu.gh"'), ('User-Password', '"SH9G3I"'),  ('Attr-26.29671.1', '0x446a756e676c65204851203032'))
+p = (
+    ('Acct-Session-Id', '"624874448299458941"'),
+    ('Called-Station-Id', '"00-18-0A-F2-DE-20:Radius test"'),
+    ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'),
+    ('Framed-IP-Address', '172.31.3.142'),
+    ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'),
+    ('NAS-IP-Address', '108.161.147.120'),
+    ('NAS-Port', '0'),
+    ('NAS-Port-Id', '"Wireless-802.11"'),
+    ('NAS-Port-Type', 'Wireless-802.11'),
+    ('Service-Type', 'Login-User'),
+    ('User-Name', '"alwaysdeone@gmail.com"'),
+    ('User-Password', '"12345"'),
+    ('Attr-26.29671.1', '0x446a756e676c65204851203032')
+    )
 
 def get_user(username):
     return User.objects.get(username__exact=username)
@@ -60,6 +74,18 @@ def authorize(p):
 
     ap = get_ap(ap_mac)
     radiusd.radlog(radiusd.L_INFO, '*** AP fetched successfully: ' + ap.mac_address + ' ***')
+
+    # Check Password
+    password = trim_value(params['User-Password'])
+    
+    radiusd.radlog(radiusd.L_INFO, '*** Checking Password... ***')
+    if user.check_password(password):
+        radiusd.radlog(radiusd.L_INFO, '*** Password Correct! ***')
+        pass
+    else:
+        radiusd.radlog(radiusd.L_INFO, '*** Password Incorrect :-( ***')
+        return (radiusd.RLM_MODULE_REJECT,
+            (('Reply-Message', 'Password Incorrect'),), (('Auth-Type', 'python'),))
 
     if user.is_active:
         radiusd.radlog(radiusd.L_INFO, '*** User is active ***')
