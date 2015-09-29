@@ -70,8 +70,13 @@ def authorize(p):
     ap_mac = create_mac(params['Called-Station-Id'])
 
     radiusd.radlog(radiusd.L_INFO, '*** Fetching User... ***')
-    user = get_user(username)
-    radiusd.radlog(radiusd.L_INFO, '*** - User fetched successfully: ' + user.username + ' ***')
+    try:
+        user = get_user(username)
+    except User.DoesNotExist:
+        radiusd.radlog(radiusd.L_INFO, '*** - User Not Found ***')
+        return
+    else:
+        radiusd.radlog(radiusd.L_INFO, '*** - User fetched successfully: ' + user.username + ' ***')
 
     radiusd.radlog(radiusd.L_INFO, '*** Fetching AP ... ***')
     ap = get_ap(ap_mac)
