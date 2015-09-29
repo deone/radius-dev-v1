@@ -69,55 +69,65 @@ def authorize(p):
     username = trim_value(params['User-Name'])
     ap_mac = create_mac(params['Called-Station-Id'])
 
+    radiusd.radlog(radiusd.L_INFO, '*** Fetching User... ***')
     user = get_user(username)
-    radiusd.radlog(radiusd.L_INFO, '*** User fetched successfully: ' + user.username + ' ***')
+    radiusd.radlog(radiusd.L_INFO, '*** - User fetched successfully: ' + user.username + ' ***')
 
+    radiusd.radlog(radiusd.L_INFO, '*** Fetching AP ... ***')
     ap = get_ap(ap_mac)
-    radiusd.radlog(radiusd.L_INFO, '*** AP fetched successfully: ' + ap.mac_address + ' ***')
+    radiusd.radlog(radiusd.L_INFO, '*** - AP fetched successfully: ' + ap.mac_address + ' ***')
 
     # Check Password
     password = trim_value(params['User-Password'])
     
-    radiusd.radlog(radiusd.L_INFO, '*** Checking Password... ***')
+    radiusd.radlog(radiusd.L_INFO, '*** Checking Password ... ***')
     if user.check_password(password):
-        radiusd.radlog(radiusd.L_INFO, '*** Password Correct! ***')
-        pass
+        radiusd.radlog(radiusd.L_INFO, '*** - Password Correct! ***')
     else:
-        radiusd.radlog(radiusd.L_INFO, '*** Password Incorrect :-( ***')
+        radiusd.radlog(radiusd.L_INFO, '*** - Password Incorrect :-( ***')
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'Password Incorrect'),), (('Auth-Type', 'python'),))
 
+    # Check User Account Status
+    radiusd.radlog(radiusd.L_INFO, '*** Checking User Account Status ... ***')
     if user.is_active:
-        radiusd.radlog(radiusd.L_INFO, '*** User is active ***')
-        if ap.allows(user):
-            radiusd.radlog(radiusd.L_INFO, '*** AP allowed user ***')
-            subscription = get_subscription(user)
-            if subscription.is_valid():
-                radiusd.radlog(radiusd.L_INFO, '*** User subscription valid ***')
-                now = timezone.now()
-
-                package_period = str((subscription.stop - now).total_seconds())
-                package_period = package_period.split(".")[0]
-
-                bandwidth_limit = str(float(subscription.package.speed) * 1000000)
-                bandwidth_limit = bandwidth_limit.split('.')[0]
-                
-                radiusd.radlog(radiusd.L_INFO, '*** Sending Access-Accept to Meraki ***')
-                return (radiusd.RLM_MODULE_OK,
-                    (('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
-                    (('Auth-Type', 'python'),))
-            else:
-                radiusd.radlog(radiusd.L_INFO, '*** User subscription invalid ***')
-                return (radiusd.RLM_MODULE_REJECT,
-                    (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
-        else:
-            radiusd.radlog(radiusd.L_INFO, '*** AP disallowed user ***')
-            return (radiusd.RLM_MODULE_REJECT,
-                (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),))
+        radiusd.radlog(radiusd.L_INFO, '*** - User Account Active ***')
     else:
-        radiusd.radlog(radiusd.L_INFO, '*** User is inactive ***')
+        radiusd.radlog(radiusd.L_INFO, '*** - User Account Inactive ***')
         return (radiusd.RLM_MODULE_REJECT,
-            (('Reply-Message', 'User De-activated'),), (('Auth-Type', 'python'),))
+            (('Reply-Message', 'User Inactive'),), (('Auth-Type', 'python'),))
+
+    # Check whether AP allows user
+    radiusd.radlog(radiusd.L_INFO, '*** AP Checking User Eligibility ... ***')
+    if ap.allows(user):
+        radiusd.radlog(radiusd.L_INFO, '*** - AP Allowed User ***')
+    else:
+        radiusd.radlog(radiusd.L_INFO, '*** - AP Disallowed User ***')
+        return (radiusd.RLM_MODULE_REJECT,
+            (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),))
+
+    # Check user subscription validity
+    radiusd.radlog(radiusd.L_INFO, '*** Check User Subscription Validity ... ***')
+    subscription = get_subscription(user)
+    if subscription.is_valid():
+        radiusd.radlog(radiusd.L_INFO, '*** - User Subscription Valid ***')
+        now = timezone.now()
+
+        package_period = str((subscription.stop - now).total_seconds())
+        package_period = package_period.split(".")[0]
+
+        bandwidth_limit = str(float(subscription.package.speed) * 1000000)
+        bandwidth_limit = bandwidth_limit.split('.')[0]
+
+        radiusd.radlog(radiusd.L_INFO, '*** - Sending Access-Accept to Meraki ***')
+        return (radiusd.RLM_MODULE_OK,
+            (('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
+            (('Auth-Type', 'python'),))
+    else:
+        radiusd.radlog(radiusd.L_INFO, '*** - User Subscription Invalid ***')
+        return (radiusd.RLM_MODULE_REJECT,
+            (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
+
 
 if __name__ == "__main__":
     a = authorize(p)
