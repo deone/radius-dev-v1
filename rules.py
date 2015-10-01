@@ -78,8 +78,13 @@ def authorize(p):
         radiusd.radlog(radiusd.L_INFO, '*** - User fetched successfully: ' + user.username + ' ***')
 
     radiusd.radlog(radiusd.L_INFO, '*** Fetching AP... ***')
-    ap = get_ap(ap_mac)
-    radiusd.radlog(radiusd.L_INFO, '*** - AP fetched successfully: ' + ap.mac_address + ' ***')
+    try:
+        ap = get_ap(ap_mac)
+    except AccessPoint.DoesNotExist:
+        radiusd.radlog(radiusd.L_INFO, '*** - AP Not Found ***')
+        return
+    else:
+        radiusd.radlog(radiusd.L_INFO, '*** - AP fetched successfully: ' + ap.mac_address + ' ***')
 
     # Check Password
     password = trim_value(params['User-Password'])
