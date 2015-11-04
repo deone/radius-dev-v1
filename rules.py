@@ -73,7 +73,8 @@ def authorize(p):
         user = get_user(username)
     except User.DoesNotExist:
         radiusd.radlog(radiusd.L_INFO, '*** - User Not Found ***')
-        return
+        return (radiusd.RLM_MODULE_REJECT,
+            (('Reply-Message', 'User account does not exist.'),), (('Auth-Type', 'python'),))
     else:
         radiusd.radlog(radiusd.L_INFO, '*** - User fetched successfully: ' + user.username + ' ***')
 
@@ -82,7 +83,8 @@ def authorize(p):
         ap = get_ap(ap_mac)
     except AccessPoint.DoesNotExist:
         radiusd.radlog(radiusd.L_INFO, '*** - AP Not Found ***')
-        return
+        return radiusd.RLM_MODULE_REJECT,
+            (('Reply-Message', 'AP Not Found. Please call customer care.'),), (('Auth-Type', 'python'),))
     else:
         radiusd.radlog(radiusd.L_INFO, '*** - AP fetched successfully: ' + ap.mac_address + ' ***')
 
