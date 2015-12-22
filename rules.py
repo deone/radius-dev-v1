@@ -60,14 +60,7 @@ def get_subscription(user):
 def instantiate(p):
     radiusd.radlog(radiusd.L_INFO, '*** Instantiating Python module ***')
 
-def authorize(p):
-    radiusd.radlog(radiusd.L_INFO, "*** Request Content: " + str(p) + " ***")
-
-    params = dict(p)
-
-    username = trim_value(params['User-Name'])
-    ap_mac = create_mac(params['Called-Station-Id'])
-
+def fetch_user(username):
     radiusd.radlog(radiusd.L_INFO, '*** Fetching User... ***')
     try:
         user = get_user(username)
@@ -77,7 +70,9 @@ def authorize(p):
             (('Reply-Message', 'User account does not exist.'),), (('Auth-Type', 'python'),))
     else:
         radiusd.radlog(radiusd.L_INFO, '*** - User fetched successfully: ' + user.username + ' ***')
+        return user
 
+def fetch_ap(ap_mac):
     radiusd.radlog(radiusd.L_INFO, '*** Fetching AP... ***')
     try:
         ap = get_ap(ap_mac)
@@ -87,10 +82,9 @@ def authorize(p):
             (('Reply-Message', 'AP Not Found. Please call customer care.'),), (('Auth-Type', 'python'),))
     else:
         radiusd.radlog(radiusd.L_INFO, '*** - AP fetched successfully: ' + ap.mac_address + ' ***')
+        return ap
 
-    # Check Password
-    password = trim_value(params['User-Password'])
-    
+def check_password(user, password):
     radiusd.radlog(radiusd.L_INFO, '*** Checking Password... ***')
     if user.check_password(password):
         radiusd.radlog(radiusd.L_INFO, '*** - Password Correct! ***')
@@ -99,7 +93,7 @@ def authorize(p):
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'Password Incorrect'),), (('Auth-Type', 'python'),))
 
-    # Check User Account Status
+def check_user_account_status(user):
     radiusd.radlog(radiusd.L_INFO, '*** Checking User Account Status... ***')
     if user.is_active:
         radiusd.radlog(radiusd.L_INFO, '*** - User Account Active ***')
@@ -108,7 +102,7 @@ def authorize(p):
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'User Inactive'),), (('Auth-Type', 'python'),))
 
-    # Check whether AP allows user
+def check_ap_eligibility(user, ap):
     radiusd.radlog(radiusd.L_INFO, '*** AP Checking User Eligibility... ***')
     if ap.allows(user):
         radiusd.radlog(radiusd.L_INFO, '*** - AP Allowed User ***')
@@ -117,7 +111,7 @@ def authorize(p):
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),))
 
-    # Check user subscription validity
+def check_subscription_validity(user):
     radiusd.radlog(radiusd.L_INFO, '*** Check User Subscription Validity ... ***')
     subscription = get_subscription(user)
     if subscription.is_valid():
@@ -140,6 +134,29 @@ def authorize(p):
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
 
+def authorize(p):
+    radiusd.radlog(radiusd.L_INFO, "*** Request Content: " + str(p) + " ***")
+
+    params = dict(p)
+
+    username = trim_value(params['User-Name'])
+    ap_mac = create_mac(params['Called-Station-Id'])
+    password = trim_value(params['User-Password'])
+
+    # Fetch User
+    user = fetch_user(username)
+    # Fetch AP
+    ap = fetch_ap(ap_mac)
+    # Check Password
+    check_password(user, password)
+    # Check User Account Status
+    check_user_account_status(user)
+    # Check whether AP allows user
+    check_ap_eligibility(user, ap)
+    # Check user subscription validity
+    response = check_subscription_validity(user)
+
+    return response
 
 if __name__ == "__main__":
     a = authorize(p)
