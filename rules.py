@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 
 import os
+import hashlib
+from datetime import timedelta
+
 import radiusd
 
 
@@ -15,9 +18,16 @@ django.setup()
 
 from django.contrib.auth.models import User
 from django.utils import timezone
-from accounts.models import AccessPoint
-radiusd.radlog(radiusd.L_INFO, "*** - Django elements imported and set up successfully ***")
 
+from billing.settings import PACKAGE_TYPES_HOURS_MAP
+from accounts.models import AccessPoint, Radcheck
+from accounts.helpers import md5_password
+from packages.models import InstantVoucher, PackageSubscription
+
+def print_info(info):
+    radiusd.radlog(radiusd.L_INFO, info)
+
+print_info("*** - Django elements imported and set up successfully ***")
 
 p = (
     ('Acct-Session-Id', '"624874448299458941"'),
@@ -35,12 +45,6 @@ p = (
     ('Attr-26.29671.1', '0x446a756e676c65204851203032')
     )
 
-def get_user(username):
-    return User.objects.get(username__exact=username)
-
-def get_ap(mac):
-    return AccessPoint.objects.get(mac_address__exact=mac)
-
 def create_mac(param):
     called_station_id = trim_value(param).split(':')[0]
     return called_station_id.replace('-', ':')
@@ -48,94 +52,147 @@ def create_mac(param):
 def trim_value(val):
     return val[1:-1]
 
-def get_subscription(user):
+def instantiate(p):
+    print_info('*** Instantiating Python module ***')
+    return True
+
+# For simplicity, make Package Subscription reference Radcheck instead of Subscriber for now.
+# - Eventually, move all extra user info into Radcheck and rename it to Subscriber. Password check will then happen in Subscriber (md5).
+# Check for package subscription. If subscription exists, skip next step.
+# Fetch subscriber - query User with username. If not found, query Radcheck with username. If found in Radcheck, create PackageSubscription.
+# For instant users, check password by md5-hashing password and comparing it with password in Radcheck.
+# Skip account status check for instant users - log this to avoid confusion.
+# To check AP eligibilty for instant users, return False in the 'else' block of AccessPoint.allows() if user is not an instance of User.
+
+def create_subscription(voucher):
+    ivoucher = InstantVoucher.objects.get(radcheck__username=voucher.username)
+    now = timezone.now()
+    ps = PackageSubscription.objects.create(
+            radcheck=voucher, package=ivoucher.package, start=now,
+            stop=now + timedelta(hours=PACKAGE_TYPES_HOURS_MAP[ivoucher.package.package_type]))
+
+    return ps
+
+def get_or_create_subscription(voucher):
+    try:
+        subscription = PackageSubscription.objects.get(radcheck__username=voucher.username)
+    except PackageSubscription.DoesNotExist:
+        subscription = create_subscription(voucher)
+
+    return subscription
+
+def get_user_subscription(user):
     if user.subscriber.group is not None:
         # User belongs to a group. Return group package subscription
         subscription = user.subscriber.group.grouppackagesubscription_set.all()[0]
     else:
-        subscription = user.subscriber.packagesubscription_set.all()[0]
+        try:
+            subscription = user.radcheck.packagesubscription_set.all()[0]
+        except IndexError:
+            return False
+        else:
+            pass
 
     return subscription
 
-def instantiate(p):
-    radiusd.radlog(radiusd.L_INFO, '*** Instantiating Python module ***')
-
-def fetch_user(username):
-    radiusd.radlog(radiusd.L_INFO, '*** Fetching User... ***')
+def get_user(username):
+    print_info('*** Fetching User... ***')
     try:
-        user = get_user(username)
+        user = User.objects.get(username__exact=username)
     except User.DoesNotExist:
-        radiusd.radlog(radiusd.L_INFO, '*** - User Not Found ***')
-        return (radiusd.RLM_MODULE_REJECT,
-            (('Reply-Message', 'User account does not exist.'),), (('Auth-Type', 'python'),))
+        print_info('*** - User Not Found ***')
+        return None
     else:
-        radiusd.radlog(radiusd.L_INFO, '*** - User fetched successfully: ' + user.username + ' ***')
+        print_info('*** - User fetched successfully: ' + user.username + ' ***')
         return user
 
-def fetch_ap(ap_mac):
-    radiusd.radlog(radiusd.L_INFO, '*** Fetching AP... ***')
+def get_voucher(username):
+    print_info("*** Okay. Might be a voucher. Let's try fetching Voucher... ***")
     try:
-        ap = get_ap(ap_mac)
-    except AccessPoint.DoesNotExist:
-        radiusd.radlog(radiusd.L_INFO, '*** - AP Not Found ***')
-        return (radiusd.RLM_MODULE_REJECT,
-            (('Reply-Message', 'AP Not Found. Please call customer care.'),), (('Auth-Type', 'python'),))
+        voucher_list = Radcheck.objects.filter(user=None).filter(username__exact=username)
+    except Radcheck.DoesNotExist:
+        print_info('*** - Voucher Not Found ***')
+        return None
     else:
-        radiusd.radlog(radiusd.L_INFO, '*** - AP fetched successfully: ' + ap.mac_address + ' ***')
+        voucher = voucher_list[0]
+        print_info('*** - Voucher fetched successfully: ' + voucher.username + ' ***')
+        return voucher
+
+def get_ap(ap_mac):
+    print_info('*** Fetching AP... ***')
+    try:
+        ap = AccessPoint.objects.get(mac_address__exact=ap_mac)
+    except AccessPoint.DoesNotExist:
+        print_info('*** - AP Not Found ***')
+        return False
+    else:
+        print_info('*** - AP fetched successfully: ' + ap.mac_address + ' ***')
         return ap
 
-def check_password(user, password):
-    radiusd.radlog(radiusd.L_INFO, '*** Checking Password... ***')
-    if user.check_password(password):
-        radiusd.radlog(radiusd.L_INFO, '*** - Password Correct! ***')
+def check_voucher_password(voucher, password):
+    if not md5_password(password) == voucher.value:
+        print_info('*** - Password Incorrect! ***')
+        return False
     else:
-        radiusd.radlog(radiusd.L_INFO, '*** - Password Incorrect :-( ***')
-        return (radiusd.RLM_MODULE_REJECT,
-            (('Reply-Message', 'Password Incorrect'),), (('Auth-Type', 'python'),))
+        print_info('*** - Password Correct :-( ***')
+        return True
+
+def check_user_password(user, password):
+    if not user.check_password(password):
+        print_info('*** - Password Incorrect! ***')
+        return False
+    else:
+        print_info('*** - Password Correct :-( ***')
+        return True 
 
 def check_user_account_status(user):
-    radiusd.radlog(radiusd.L_INFO, '*** Checking User Account Status... ***')
+    """ if not isinstance(user, User):
+        print_info('*** - Instant Voucher - Skipping Account Status Check ***')
+    else: """
     if user.is_active:
-        radiusd.radlog(radiusd.L_INFO, '*** - User Account Active ***')
+        print_info('*** - User Account Active ***')
+        return True
     else:
-        radiusd.radlog(radiusd.L_INFO, '*** - User Account Inactive ***')
-        return (radiusd.RLM_MODULE_REJECT,
-            (('Reply-Message', 'User Inactive'),), (('Auth-Type', 'python'),))
+        print_info('*** - User Account Inactive ***')
+        return False
 
-def check_ap_eligibility(user, ap):
-    radiusd.radlog(radiusd.L_INFO, '*** AP Checking User Eligibility... ***')
+def check_user_eligibility_on_ap(user, ap):
+    print_info('*** AP Checking User Eligibility... ***')
     if ap.allows(user):
-        radiusd.radlog(radiusd.L_INFO, '*** - AP Allowed User ***')
+        print_info('*** - AP Allowed User ***')
+        return True
     else:
-        radiusd.radlog(radiusd.L_INFO, '*** - AP Disallowed User ***')
-        return (radiusd.RLM_MODULE_REJECT,
-            (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),))
+        print_info('*** - AP Disallowed User ***')
+        return False
 
-def check_subscription_validity(user):
-    radiusd.radlog(radiusd.L_INFO, '*** Check User Subscription Validity ... ***')
-    subscription = get_subscription(user)
-    if subscription.is_valid():
-        radiusd.radlog(radiusd.L_INFO, '*** - User Subscription Valid ***')
-        now = timezone.now()
+def check_subscription_validity(subscription):
+    print_info('*** Check User Subscription Validity ... ***')
+    if subscription:
+        if subscription.is_valid():
+            print_info('*** - User Subscription Valid ***')
+            now = timezone.now()
 
-        package_period = str((subscription.stop - now).total_seconds())
-        package_period = package_period.split(".")[0]
+            package_period = str((subscription.stop - now).total_seconds())
+            package_period = package_period.split(".")[0]
 
-        bandwidth_limit = str(float(subscription.package.speed) * 1000000)
-        bandwidth_limit = bandwidth_limit.split('.')[0]
+            bandwidth_limit = str(float(subscription.package.speed) * 1000000)
+            bandwidth_limit = bandwidth_limit.split('.')[0]
 
-        radiusd.radlog(radiusd.L_INFO, '*** - Sending Access-Accept to Meraki ***')
-        return (radiusd.RLM_MODULE_OK,
-            (('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
-            (('Auth-Type', 'python'),))
+            print_info('*** - Sending Access-Accept to Meraki ***')
+            return (radiusd.RLM_MODULE_OK,
+                (('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
+                (('Auth-Type', 'python'),))
+        else:
+            print_info('*** - User Subscription Invalid ***')
+            print_info('*** - Sending Access-Reject to Meraki ***')
+            return (radiusd.RLM_MODULE_REJECT,
+                (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
     else:
-        radiusd.radlog(radiusd.L_INFO, '*** - User Subscription Invalid ***')
-        radiusd.radlog(radiusd.L_INFO, '*** - Sending Access-Reject to Meraki ***')
         return (radiusd.RLM_MODULE_REJECT,
-            (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
+                (('Reply-Message', 'User Has No Subscription'),), (('Auth-Type', 'python'),))
 
 def authorize(p):
-    radiusd.radlog(radiusd.L_INFO, "*** Request Content: " + str(p) + " ***")
+    print_info("*** Request Content: " + str(p) + " ***")
 
     params = dict(p)
 
@@ -143,21 +200,55 @@ def authorize(p):
     ap_mac = create_mac(params['Called-Station-Id'])
     password = trim_value(params['User-Password'])
 
-    # Fetch User
-    user = fetch_user(username)
-    # Fetch AP
-    ap = fetch_ap(ap_mac)
+    # Fetch user
+    user = None
+    voucher = None
+
+    user = get_user(username)
+    if not user:
+        voucher = get_voucher(username)
+        if not voucher:
+            return (radiusd.RLM_MODULE_REJECT,
+                (('Reply-Message', 'User account or Voucher does not exist.'),), (('Auth-Type', 'python'),)) 
+
     # Check Password
-    check_password(user, password)
+    print_info('*** Checking Password... ***')
+    if not user:
+        if not check_voucher_password(voucher, password):
+            return (radiusd.RLM_MODULE_REJECT,
+                    (('Reply-Message', 'Password Incorrect'),), (('Auth-Type', 'python'),))
+    if not voucher:
+        if not check_user_password(user, password):
+            return (radiusd.RLM_MODULE_REJECT,
+                    (('Reply-Message', 'Password Incorrect'),), (('Auth-Type', 'python'),)) 
+
     # Check User Account Status
-    check_user_account_status(user)
+    print_info('*** Checking User Account Status... ***')
+    if user:
+        if not check_user_account_status(user):
+            return (radiusd.RLM_MODULE_REJECT,
+                (('Reply-Message', 'User Inactive'),), (('Auth-Type', 'python'),))
+    else:
+        print_info("*** We're skipping account status check for voucher ***")
+        pass
+
+    # Fetch AP
+    ap = get_ap(ap_mac)
+    if not ap:
+        return (radiusd.RLM_MODULE_REJECT,
+            (('Reply-Message', 'AP Not Found. Please call customer care.'),), (('Auth-Type', 'python'),))
+
     # Check whether AP allows user
-    check_ap_eligibility(user, ap)
-    # Check user subscription validity
-    response = check_subscription_validity(user)
+    if not check_user_eligibility_on_ap(user, ap):
+        return (radiusd.RLM_MODULE_REJECT,
+            (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),))
+
+    if not voucher:
+        subscription = get_user_subscription(user)
+    
+    if not user:
+        subscription = get_or_create_subscription(voucher)
+
+    response = check_subscription_validity(subscription)
 
     return response
-
-if __name__ == "__main__":
-    a = authorize(p)
-    print a
