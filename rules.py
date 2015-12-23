@@ -45,24 +45,8 @@ p = (
     ('Attr-26.29671.1', '0x446a756e676c65204851203032')
     )
 
-def create_mac(param):
-    called_station_id = trim_value(param).split(':')[0]
-    return called_station_id.replace('-', ':')
-
 def trim_value(val):
     return val[1:-1]
-
-def instantiate(p):
-    print_info('*** Instantiating Python module ***')
-    return True
-
-# For simplicity, make Package Subscription reference Radcheck instead of Subscriber for now.
-# - Eventually, move all extra user info into Radcheck and rename it to Subscriber. Password check will then happen in Subscriber (md5).
-# Check for package subscription. If subscription exists, skip next step.
-# Fetch subscriber - query User with username. If not found, query Radcheck with username. If found in Radcheck, create PackageSubscription.
-# For instant users, check password by md5-hashing password and comparing it with password in Radcheck.
-# Skip account status check for instant users - log this to avoid confusion.
-# To check AP eligibilty for instant users, return False in the 'else' block of AccessPoint.allows() if user is not an instance of User.
 
 def create_subscription(voucher):
     ivoucher = InstantVoucher.objects.get(radcheck__username=voucher.username)
@@ -72,6 +56,24 @@ def create_subscription(voucher):
             stop=now + timedelta(hours=PACKAGE_TYPES_HOURS_MAP[ivoucher.package.package_type]))
 
     return ps
+
+##############################
+
+def instantiate(p):
+    print_info('*** Instantiating Python module ***')
+    return True
+
+def create_mac(param):
+    called_station_id = trim_value(param).split(':')[0]
+    return called_station_id.replace('-', ':')
+
+# For simplicity, make Package Subscription reference Radcheck instead of Subscriber for now.
+# - Eventually, move all extra user info into Radcheck and rename it to Subscriber. Password check will then happen in Subscriber (md5).
+# Check for package subscription. If subscription exists, skip next step.
+# Fetch subscriber - query User with username. If not found, query Radcheck with username. If found in Radcheck, create PackageSubscription.
+# For instant users, check password by md5-hashing password and comparing it with password in Radcheck.
+# Skip account status check for instant users - log this to avoid confusion.
+# To check AP eligibilty for instant users, return False in the 'else' block of AccessPoint.allows() if user is not an instance of User.
 
 def get_or_create_subscription(voucher):
     try:
@@ -89,9 +91,7 @@ def get_user_subscription(user):
         try:
             subscription = user.radcheck.packagesubscription_set.all()[0]
         except IndexError:
-            return False
-        else:
-            pass
+            return None
 
     return subscription
 
@@ -146,9 +146,6 @@ def check_user_password(user, password):
         return True 
 
 def check_user_account_status(user):
-    """ if not isinstance(user, User):
-        print_info('*** - Instant Voucher - Skipping Account Status Check ***')
-    else: """
     if user.is_active:
         print_info('*** - User Account Active ***')
         return True
