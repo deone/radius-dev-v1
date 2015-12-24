@@ -110,11 +110,11 @@ def get_voucher(username):
     print_info("*** Okay. Might be a voucher. Let's try fetching Voucher... ***")
     try:
         voucher_list = Radcheck.objects.filter(user=None).filter(username__exact=username)
-    except Radcheck.DoesNotExist:
+        voucher = voucher_list[0]
+    except IndexError:
         print_info('*** - Voucher Not Found ***')
         return None
     else:
-        voucher = voucher_list[0]
         print_info('*** - Voucher fetched successfully: ' + voucher.username + ' ***')
         return voucher
 

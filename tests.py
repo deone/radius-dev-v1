@@ -80,6 +80,23 @@ class AuthorizeTestCase(unittest.TestCase):
         group.delete()
         gps.delete()
 
+    def test_get_user(self):
+        user = rules.get_user(self.username)
+        self.assertTrue(isinstance(user, User))
+
+    def test_get_user_None(self):
+        self.assertEqual(rules.get_user('hhhh'), None)
+
+    def test_get_voucher(self):
+        username = 'aaaa'
+        voucher = Radcheck.objects.create(user=None, username=username,
+            attribute='MD5-Password', op=':=', value=md5_password('12345'))
+        self.assertTrue(isinstance(rules.get_voucher(username), Radcheck))
+        voucher.delete()
+
+    def test_get_voucher_None(self):
+        self.assertEqual(rules.get_voucher('bbbb'), None)
+
     """ def test_authorize(self):
         result = rules.authorize(self.p)
         print result
