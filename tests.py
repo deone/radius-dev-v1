@@ -30,6 +30,70 @@ class AuthorizeTestCase(unittest.TestCase):
             ('NAS-Port-Id', '"Wireless-802.11"'),
             ('NAS-Port-Type', 'Wireless-802.11'),
             ('Service-Type', 'Login-User'),
+            ('User-Name', '"c@c.com"'),
+            ('User-Password', '"12345"'),
+            ('Attr-26.29671.1', '0x446a756e676c65204851203032')
+            )
+
+        # self.ap = AccessPoint.objects.create(name='My AP', mac_address='00:18:0A:F2:DE:15')
+
+    def test_authorize_user_voucher_None(self):
+        result = rules.authorize(self.p)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'User account or Voucher does not exist.'))
+
+    def test_authorize_voucher_password_incorrect(self):
+        p = (
+            ('User-Name', '"f@f.com"'),
+            ('User-Password', '"00000"'),
+            ('Called-Station-Id', '"00-18-0A-F2-DE-10:Radius test"'),
+            )
+
+        voucher = Radcheck.objects.create(user=None, username='f@f.com',
+            attribute='MD5-Password', op=':=', value=md5_password('12345'))
+
+        result = rules.authorize(p)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'Voucher Password Incorrect'))
+
+        voucher.delete()
+
+    def test_authorize_user_password_incorrect(self):
+        p = (
+            ('User-Name', '"f@f.com"'),
+            ('User-Password', '"00000"'),
+            ('Called-Station-Id', '"00-18-0A-F2-DE-10:Radius test"'),
+            )
+
+        user = User.objects.create_user('f@f.com', 'f@f.com', '12345')
+
+        result = rules.authorize(p)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
+
+        user.delete()
+
+    def tearDown(self):
+        # self.ap.delete()
+        pass
+
+class FunctionsTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.p = (
+            ('Acct-Session-Id', '"624874448299458941"'),
+            ('Called-Station-Id', '"00-18-0A-F2-DE-10:Radius test"'),
+            ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'),
+            ('Framed-IP-Address', '172.31.3.142'),
+            ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'),
+            ('NAS-IP-Address', '108.161.147.120'),
+            ('NAS-Port', '0'),
+            ('NAS-Port-Id', '"Wireless-802.11"'),
+            ('NAS-Port-Type', 'Wireless-802.11'),
+            ('Service-Type', 'Login-User'),
             ('User-Name', '"a@a.com"'),
             ('User-Password', '"12345"'),
             # ('User-Name', '"dayo@thecodeschool.net"'),
@@ -148,11 +212,6 @@ class AuthorizeTestCase(unittest.TestCase):
         self.assertEqual(len(response), 3)
         self.assertEqual(response[0], 0)
         subscription.delete()
-
-    """ def test_authorize(self):
-        result = rules.authorize(self.p)
-        print result
-        self.assertEqual(len(result), 3) """
 
     def tearDown(self):
         self.user.delete() # This also deletes self.subscriber

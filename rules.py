@@ -131,18 +131,18 @@ def get_ap(ap_mac):
 
 def check_voucher_password(voucher, password):
     if not md5_password(password) == voucher.value:
-        print_info('*** - Password Incorrect! ***')
+        print_info('*** - Voucher Password Incorrect! ***')
         return False
     else:
-        print_info('*** - Password Correct :-( ***')
+        print_info('*** - Voucher Password Correct :-( ***')
         return True
 
 def check_user_password(user, password):
     if not user.check_password(password):
-        print_info('*** - Password Incorrect! ***')
+        print_info('*** - User Password Incorrect! ***')
         return False
     else:
-        print_info('*** - Password Correct :-( ***')
+        print_info('*** - User Password Correct :-( ***')
         return True 
 
 def check_user_account_status(user):
@@ -209,11 +209,11 @@ def authorize(p):
     if not user:
         if not check_voucher_password(voucher, password):
             return (radiusd.RLM_MODULE_REJECT,
-                    (('Reply-Message', 'Password Incorrect'),), (('Auth-Type', 'python'),))
+                    (('Reply-Message', 'Voucher Password Incorrect'),), (('Auth-Type', 'python'),))
     if not voucher:
         if not check_user_password(user, password):
             return (radiusd.RLM_MODULE_REJECT,
-                    (('Reply-Message', 'Password Incorrect'),), (('Auth-Type', 'python'),)) 
+                    (('Reply-Message', 'User Password Incorrect'),), (('Auth-Type', 'python'),)) 
 
     # Check User Account Status
     print_info('*** Checking User Account Status... ***')
