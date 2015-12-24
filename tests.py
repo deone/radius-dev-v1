@@ -39,6 +39,7 @@ class AuthorizeTestCase(unittest.TestCase):
             ('Attr-26.29671.1', '0x446a756e676c65204851203032')
             )
         
+        self.now = timezone.now()
         self.params = dict(self.p)
         self.username = rules.trim_value(self.params['User-Name'])
         self.password = rules.trim_value(self.params['User-Password'])
@@ -72,9 +73,8 @@ class AuthorizeTestCase(unittest.TestCase):
         group = GroupAccount.objects.create(name='CUG', max_no_of_users=10)
         self.subscriber.group = group
         self.subscriber.save()
-        now = timezone.now()
-        gps = GroupPackageSubscription.objects.create(group=group, package=self.package, start=now,
-            stop=now + timedelta(hours=PACKAGE_TYPES_HOURS_MAP[self.package.package_type]))
+        gps = GroupPackageSubscription.objects.create(group=group, package=self.package, start=self.now,
+            stop=self.now + timedelta(hours=PACKAGE_TYPES_HOURS_MAP[self.package.package_type]))
 
         subscription = rules.get_user_subscription(self.user)
         self.assertTrue(isinstance(subscription, GroupPackageSubscription))
@@ -132,6 +132,22 @@ class AuthorizeTestCase(unittest.TestCase):
 
     def test_check_user_eligibility_on_ap_invalid(self):
         self.assertFalse(rules.check_user_eligibility_on_ap(self.user, self.ap))
+
+    def test_check_subscription_validity_valid(self):
+        subscription = rules.get_or_create_subscription(self.voucher)
+        response = rules.check_subscription_validity(subscription)
+        self.assertEqual(len(response), 3)
+        self.assertEqual(response[0], 2)
+        subscription.delete()
+
+    def test_check_subscription_validity_invalid(self):
+        subscription = rules.get_or_create_subscription(self.voucher)
+        subscription.stop = self.now - timedelta(hours=PACKAGE_TYPES_HOURS_MAP[subscription.package.package_type])
+        subscription.save()
+        response = rules.check_subscription_validity(subscription)
+        self.assertEqual(len(response), 3)
+        self.assertEqual(response[0], 0)
+        subscription.delete()
 
     """ def test_authorize(self):
         result = rules.authorize(self.p)

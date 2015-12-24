@@ -164,29 +164,25 @@ def check_user_eligibility_on_ap(user, ap):
 
 def check_subscription_validity(subscription):
     print_info('*** Check User Subscription Validity ... ***')
-    if subscription:
-        if subscription.is_valid():
-            print_info('*** - User Subscription Valid ***')
-            now = timezone.now()
+    if subscription.is_valid():
+        print_info('*** - User Subscription Valid ***')
+        now = timezone.now()
 
-            package_period = str((subscription.stop - now).total_seconds())
-            package_period = package_period.split(".")[0]
+        package_period = str((subscription.stop - now).total_seconds())
+        package_period = package_period.split(".")[0]
 
-            bandwidth_limit = str(float(subscription.package.speed) * 1000000)
-            bandwidth_limit = bandwidth_limit.split('.')[0]
+        bandwidth_limit = str(float(subscription.package.speed) * 1000000)
+        bandwidth_limit = bandwidth_limit.split('.')[0]
 
-            print_info('*** - Sending Access-Accept to Meraki ***')
-            return (radiusd.RLM_MODULE_OK,
-                (('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
-                (('Auth-Type', 'python'),))
-        else:
-            print_info('*** - User Subscription Invalid ***')
-            print_info('*** - Sending Access-Reject to Meraki ***')
-            return (radiusd.RLM_MODULE_REJECT,
-                (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
+        print_info('*** - Sending Access-Accept to Meraki ***')
+        return (radiusd.RLM_MODULE_OK,
+            (('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
+            (('Auth-Type', 'python'),))
     else:
+        print_info('*** - User Subscription Invalid ***')
+        print_info('*** - Sending Access-Reject to Meraki ***')
         return (radiusd.RLM_MODULE_REJECT,
-                (('Reply-Message', 'User Has No Subscription'),), (('Auth-Type', 'python'),))
+            (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
 
 def authorize(p):
     print_info("*** Request Content: " + str(p) + " ***")
@@ -247,5 +243,9 @@ def authorize(p):
         subscription = get_or_create_subscription(voucher)
 
     response = check_subscription_validity(subscription)
+
+    if not response:
+        return (radiusd.RLM_MODULE_REJECT,
+                (('Reply-Message', 'User Has No Subscription'),), (('Auth-Type', 'python'),))
 
     return response
