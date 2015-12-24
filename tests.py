@@ -105,6 +105,34 @@ class AuthorizeTestCase(unittest.TestCase):
     def test_get_ap_None(self):
         self.assertEqual(rules.get_ap('00:18:0A:F2:DE:12'), None)
 
+    def test_check_voucher_password_valid(self):
+        self.assertTrue(rules.check_voucher_password(self.voucher, '12345'))
+
+    def test_check_voucher_password_invalid(self):
+        self.assertFalse(rules.check_voucher_password(self.voucher, '00000'))
+
+    def test_check_user_password_valid(self):
+        self.assertTrue(rules.check_user_password(self.user, '12345'))
+
+    def test_check_user_password_invalid(self):
+        self.assertFalse(rules.check_user_password(self.user, '00000'))
+
+    def test_check_user_account_status_valid(self):
+        self.assertTrue(rules.check_user_account_status(self.user))
+
+    def test_check_user_account_status_invalid(self):
+        self.user.is_active = False
+        self.user.save()
+        self.assertFalse(rules.check_user_account_status(self.user))
+
+    def test_check_user_eligibility_on_ap_valid(self):
+        self.ap.status = 'PUB'
+        self.ap.save()
+        self.assertTrue(rules.check_user_eligibility_on_ap(self.user, self.ap))
+
+    def test_check_user_eligibility_on_ap_invalid(self):
+        self.assertFalse(rules.check_user_eligibility_on_ap(self.user, self.ap))
+
     """ def test_authorize(self):
         result = rules.authorize(self.p)
         print result
