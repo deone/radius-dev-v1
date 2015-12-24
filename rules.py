@@ -124,7 +124,7 @@ def get_ap(ap_mac):
         ap = AccessPoint.objects.get(mac_address__exact=ap_mac)
     except AccessPoint.DoesNotExist:
         print_info('*** - AP Not Found ***')
-        return False
+        return None
     else:
         print_info('*** - AP fetched successfully: ' + ap.mac_address + ' ***')
         return ap

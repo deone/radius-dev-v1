@@ -13,7 +13,7 @@ from django.utils import timezone
 
 from billing.settings import PACKAGE_TYPES_HOURS_MAP
 from accounts.helpers import md5_password
-from accounts.models import Radcheck, Subscriber, GroupAccount
+from accounts.models import Radcheck, Subscriber, GroupAccount, AccessPoint
 from packages.models import (Package, PackageSubscription, GroupPackageSubscription, InstantVoucher)
 
 class AuthorizeTestCase(unittest.TestCase):
@@ -50,6 +50,7 @@ class AuthorizeTestCase(unittest.TestCase):
         self.package = Package.objects.create(package_type='Daily',
             volume='3', speed='1.5', price=4)
         self.ivoucher = InstantVoucher.objects.create(radcheck=self.voucher, package=self.package)
+        self.ap = AccessPoint.objects.create(name='My AP', mac_address='00:18:0A:F2:DE:11')
 
     def test_instantiate(self):
         self.assertTrue(rules.instantiate(self.p))
@@ -97,6 +98,13 @@ class AuthorizeTestCase(unittest.TestCase):
     def test_get_voucher_None(self):
         self.assertEqual(rules.get_voucher('bbbb'), None)
 
+    def test_get_ap(self):
+        ap = rules.get_ap('00:18:0A:F2:DE:11')
+        self.assertTrue(isinstance(ap, AccessPoint))
+
+    def test_get_ap_None(self):
+        self.assertEqual(rules.get_ap('00:18:0A:F2:DE:12'), None)
+
     """ def test_authorize(self):
         result = rules.authorize(self.p)
         print result
@@ -107,6 +115,7 @@ class AuthorizeTestCase(unittest.TestCase):
         self.voucher.delete()
         self.ivoucher.delete()
         self.package.delete()
+        self.ap.delete()
 
 # suite = unittest.TestSuite([AuthorizeTestCase('test_success'), AuthorizeTestCase('test_fail')])
 # suite.run(unittest.TestResult())
