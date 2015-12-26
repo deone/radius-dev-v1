@@ -35,7 +35,7 @@ class AuthorizeTestCase(unittest.TestCase):
             ('Attr-26.29671.1', '0x446a756e676c65204851203032')
             )
 
-        # self.ap = AccessPoint.objects.create(name='My AP', mac_address='00:18:0A:F2:DE:15')
+        self.ap = AccessPoint.objects.create(name='My AP', mac_address='00:18:0A:F2:DE:15')
 
     def test_authorize_user_voucher_None(self):
         result = rules.authorize(self.p)
@@ -47,7 +47,7 @@ class AuthorizeTestCase(unittest.TestCase):
         p = (
             ('User-Name', '"f@f.com"'),
             ('User-Password', '"00000"'),
-            ('Called-Station-Id', '"00-18-0A-F2-DE-10:Radius test"'),
+            ('Called-Station-Id', '"00-18-0A-F2-DE-15:Radius test"'),
             )
 
         voucher = Radcheck.objects.create(user=None, username='f@f.com',
@@ -64,7 +64,7 @@ class AuthorizeTestCase(unittest.TestCase):
         p = (
             ('User-Name', '"f@f.com"'),
             ('User-Password', '"00000"'),
-            ('Called-Station-Id', '"00-18-0A-F2-DE-10:Radius test"'),
+            ('Called-Station-Id', '"00-18-0A-F2-DE-15:Radius test"'),
             )
 
         user = User.objects.create_user('f@f.com', 'f@f.com', '12345')
@@ -77,8 +77,7 @@ class AuthorizeTestCase(unittest.TestCase):
         user.delete()
 
     def tearDown(self):
-        # self.ap.delete()
-        pass
+        self.ap.delete()
 
 class FunctionsTestCase(unittest.TestCase):
 
