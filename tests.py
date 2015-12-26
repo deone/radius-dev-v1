@@ -78,10 +78,13 @@ class AuthorizeTestCase(unittest.TestCase):
 
     def test_ap_not_found(self):
         p = (
-            ('User-Name', '"f@f.com"'),
-            ('User-Password', '"00000"'),
-            ('Called-Station-Id', '"00-18-0A-F2-DE-15:Radius test"'),
+            ('Called-Station-Id', '"00-18-0A-F2-DE-18:Radius test"'),
             )
+
+        result = rules.authorize(p)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'AP Not Found. Please call customer care.'))
 
     def tearDown(self):
         self.ap.delete()
