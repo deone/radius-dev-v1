@@ -182,11 +182,18 @@ def authorize(p):
 
     params = dict(p)
 
-    username = trim_value(params['User-Name'])
     ap_mac = create_mac(params['Called-Station-Id'])
+
+    # Fetch AP
+    ap = get_ap(ap_mac)
+    if not ap:
+        return (radiusd.RLM_MODULE_REJECT,
+            (('Reply-Message', 'AP Not Found. Please call customer care.'),), (('Auth-Type', 'python'),))
+
+    username = trim_value(params['User-Name'])
     password = trim_value(params['User-Password'])
 
-    # Fetch user
+    # Fetch user/voucher
     user = None
     voucher = None
 
@@ -202,12 +209,6 @@ def authorize(p):
         print_info('*** - User Or Voucher Not Found ***')
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'User account or Voucher does not exist.'),), (('Auth-Type', 'python'),)) 
-
-    # Fetch AP
-    ap = get_ap(ap_mac)
-    if not ap:
-        return (radiusd.RLM_MODULE_REJECT,
-            (('Reply-Message', 'AP Not Found. Please call customer care.'),), (('Auth-Type', 'python'),))
 
     if voucher is None and user is not None:
         print_info('*** - User fetched successfully: ' + user.username + ' ***')

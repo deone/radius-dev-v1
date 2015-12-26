@@ -21,7 +21,7 @@ class AuthorizeTestCase(unittest.TestCase):
     def setUp(self):
         self.p = (
             ('Acct-Session-Id', '"624874448299458941"'),
-            ('Called-Station-Id', '"00-18-0A-F2-DE-10:Radius test"'),
+            ('Called-Station-Id', '"00-18-0A-F2-DE-15:Radius test"'),
             ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'),
             ('Framed-IP-Address', '172.31.3.142'),
             ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'),
@@ -75,6 +75,13 @@ class AuthorizeTestCase(unittest.TestCase):
         self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
 
         user.delete()
+
+    def test_ap_not_found(self):
+        p = (
+            ('User-Name', '"f@f.com"'),
+            ('User-Password', '"00000"'),
+            ('Called-Station-Id', '"00-18-0A-F2-DE-15:Radius test"'),
+            )
 
     def tearDown(self):
         self.ap.delete()
