@@ -37,39 +37,27 @@ class AuthorizeTestCase(unittest.TestCase):
 
         self.ap = AccessPoint.objects.create(name='My AP', mac_address='00:18:0A:F2:DE:15')
 
-    def test_authorize_user_voucher_None(self):
+    def test_user_voucher_None(self):
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1][0], ('Reply-Message', 'User account or Voucher does not exist.'))
 
-    def test_authorize_voucher_password_incorrect(self):
-        p = (
-            ('User-Name', '"f@f.com"'),
-            ('User-Password', '"00000"'),
-            ('Called-Station-Id', '"00-18-0A-F2-DE-15:Radius test"'),
-            )
+    def test_voucher_password_incorrect(self):
+        voucher = Radcheck.objects.create(user=None, username='c@c.com',
+            attribute='MD5-Password', op=':=', value=md5_password('00000'))
 
-        voucher = Radcheck.objects.create(user=None, username='f@f.com',
-            attribute='MD5-Password', op=':=', value=md5_password('12345'))
-
-        result = rules.authorize(p)
+        result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1][0], ('Reply-Message', 'Voucher Password Incorrect'))
 
         voucher.delete()
 
-    def test_authorize_user_password_incorrect(self):
-        p = (
-            ('User-Name', '"f@f.com"'),
-            ('User-Password', '"00000"'),
-            ('Called-Station-Id', '"00-18-0A-F2-DE-15:Radius test"'),
-            )
+    def test_user_password_incorrect(self):
+        user = User.objects.create_user('c@c.com', 'c@c.com', '00000')
 
-        user = User.objects.create_user('f@f.com', 'f@f.com', '12345')
-
-        result = rules.authorize(p)
+        result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
