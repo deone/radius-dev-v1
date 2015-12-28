@@ -66,7 +66,9 @@ class FunctionsTestCase(unittest.TestCase):
         subscription.delete()
 
     def test_get_user_subscription(self):
-        pass
+        rules.create_subscription(self.voucher, self.package)
+        subscription = rules.get_user_subscription(self.user)
+        self.assertTrue(isinstance(subscription, PackageSubscription))
 
     def test_get_user_subscription_None(self):
         subscription = rules.get_user_subscription(self.user)
