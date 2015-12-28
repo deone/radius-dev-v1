@@ -93,9 +93,9 @@ def get_user_subscription(user):
             return None
     else:
         # User belongs to a group. Return group package subscription
-        if subscriber.group:
+        try:
             subscription = subscriber.group.grouppackagesubscription_set.all()[0]
-        else:
+        except IndexError:
             return None
 
     return subscription

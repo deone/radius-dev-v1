@@ -74,7 +74,8 @@ class FunctionsTestCase(unittest.TestCase):
         subscription = rules.get_user_subscription(self.user)
         self.assertEqual(subscription, None)
 
-    def test_get_user_group_subscription(self):
+    # Refactor these
+    def test_get_user_subscription_group_valid(self):
         subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
         group = GroupAccount.objects.create(name='CUG', max_no_of_users=10)
         subscriber.group = group
@@ -86,6 +87,15 @@ class FunctionsTestCase(unittest.TestCase):
         self.assertTrue(isinstance(subscription, GroupPackageSubscription))
         group.delete()
         gps.delete()
+
+    def test_get_user_subscription_group_IndexError(self):
+        subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
+        group = GroupAccount.objects.create(name='CUG', max_no_of_users=10)
+        subscriber.group = group
+        subscriber.save()
+        subscription = rules.get_user_subscription(self.user)
+        self.assertEqual(subscription, None)
+    ##############
 
     def test_get_user(self):
         user = rules.get_user(self.username)
