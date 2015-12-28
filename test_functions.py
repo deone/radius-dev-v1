@@ -16,66 +16,6 @@ from accounts.helpers import md5_password
 from accounts.models import Radcheck, Subscriber, GroupAccount, AccessPoint
 from packages.models import (Package, PackageSubscription, GroupPackageSubscription, InstantVoucher)
 
-class AuthorizeTestCase(unittest.TestCase):
-
-    def setUp(self):
-        self.p = (
-            ('Acct-Session-Id', '"624874448299458941"'),
-            ('Called-Station-Id', '"00-18-0A-F2-DE-15:Radius test"'),
-            ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'),
-            ('Framed-IP-Address', '172.31.3.142'),
-            ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'),
-            ('NAS-IP-Address', '108.161.147.120'),
-            ('NAS-Port', '0'),
-            ('NAS-Port-Id', '"Wireless-802.11"'),
-            ('NAS-Port-Type', 'Wireless-802.11'),
-            ('Service-Type', 'Login-User'),
-            ('User-Name', '"c@c.com"'),
-            ('User-Password', '"12345"'),
-            ('Attr-26.29671.1', '0x446a756e676c65204851203032')
-            )
-
-        self.ap = AccessPoint.objects.create(name='My AP', mac_address='00:18:0A:F2:DE:15')
-
-    def test_user_voucher_None(self):
-        result = rules.authorize(self.p)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'User account or Voucher does not exist.'))
-
-    def test_voucher_password_incorrect(self):
-        voucher = Radcheck.objects.create(user=None, username='c@c.com',
-            attribute='MD5-Password', op=':=', value=md5_password('00000'))
-
-        result = rules.authorize(self.p)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'Voucher Password Incorrect'))
-
-        voucher.delete()
-
-    def test_user_password_incorrect(self):
-        user = User.objects.create_user('c@c.com', 'c@c.com', '00000')
-
-        result = rules.authorize(self.p)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
-
-        user.delete()
-
-    def test_ap_not_found(self):
-        p = (
-            ('Called-Station-Id', '"00-18-0A-F2-DE-18:Radius test"'),
-            )
-
-        result = rules.authorize(p)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'AP Not Found. Please call customer care.'))
-
-    def tearDown(self):
-        self.ap.delete()
 
 class FunctionsTestCase(unittest.TestCase):
 
@@ -106,7 +46,6 @@ class FunctionsTestCase(unittest.TestCase):
         self.password = rules.trim_value(self.params['User-Password'])
 
         self.user = User.objects.create_user(self.username, self.username, self.password)
-        self.subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
         self.voucher = Radcheck.objects.create(user=self.user, username=self.username,
             attribute='MD5-Password', op=':=', value=md5_password(self.password))
         self.package = Package.objects.create(package_type='Daily',
@@ -126,14 +65,18 @@ class FunctionsTestCase(unittest.TestCase):
         self.assertTrue(isinstance(subscription, PackageSubscription))
         subscription.delete()
 
+    def test_get_user_subscription(self):
+        pass
+
     def test_get_user_subscription_None(self):
         subscription = rules.get_user_subscription(self.user)
         self.assertEqual(subscription, None)
 
     def test_get_user_group_subscription(self):
+        subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
         group = GroupAccount.objects.create(name='CUG', max_no_of_users=10)
-        self.subscriber.group = group
-        self.subscriber.save()
+        subscriber.group = group
+        subscriber.save()
         gps = GroupPackageSubscription.objects.create(group=group, package=self.package, start=self.now,
             stop=self.now + timedelta(hours=PACKAGE_TYPES_HOURS_MAP[self.package.package_type]))
 
@@ -192,6 +135,7 @@ class FunctionsTestCase(unittest.TestCase):
         self.assertTrue(rules.check_user_eligibility_on_ap(self.user, self.ap))
 
     def test_check_user_eligibility_on_ap_invalid(self):
+        subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
         self.assertFalse(rules.check_user_eligibility_on_ap(self.user, self.ap))
 
     def test_check_subscription_validity_valid(self):
@@ -209,6 +153,14 @@ class FunctionsTestCase(unittest.TestCase):
         self.assertEqual(len(response), 3)
         self.assertEqual(response[0], 0)
         subscription.delete()
+
+    def test_check_rules(self):
+        """ password = '12345'
+        user = User.objects.create_user('c@c.com', 'c@c.com', password)
+        voucher = Radcheck.objects.create(user=user, username='c@c.com',
+            attribute='MD5-Password', op=':=', value=md5_password(password)) """
+        result = rules.check_rules(self.p)
+        print "Result", result
 
     def tearDown(self):
         self.user.delete() # This also deletes self.subscriber
