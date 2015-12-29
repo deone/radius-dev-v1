@@ -22,7 +22,7 @@ class FunctionsTestCase(unittest.TestCase):
     def setUp(self):
         self.p = (
             ('Acct-Session-Id', '"624874448299458941"'),
-            ('Called-Station-Id', '"00-18-0A-F2-DE-10:Radius test"'),
+            ('Called-Station-Id', '"00-18-0A-F2-DE-11:Radius test"'),
             ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'),
             ('Framed-IP-Address', '172.31.3.142'),
             ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'),
@@ -58,7 +58,7 @@ class FunctionsTestCase(unittest.TestCase):
 
     def test_create_mac(self):
         mac = rules.create_mac(self.params['Called-Station-Id'])
-        self.assertEqual(mac, '00:18:0A:F2:DE:10')
+        self.assertEqual(mac, '00:18:0A:F2:DE:11')
 
     def test_get_or_create_subscription(self):
         subscription = rules.get_or_create_subscription(self.voucher)
@@ -166,13 +166,41 @@ class FunctionsTestCase(unittest.TestCase):
         self.assertEqual(response[0], 0)
         subscription.delete()
 
-    def test_check_rules(self):
-        """ password = '12345'
-        user = User.objects.create_user('c@c.com', 'c@c.com', password)
-        voucher = Radcheck.objects.create(user=user, username='c@c.com',
-            attribute='MD5-Password', op=':=', value=md5_password(password)) """
-        result = rules.check_rules(self.p)
-        print "Result", result
+    def test_check_rules_user_password_incorrect(self):
+        result = rules.check_rules('00000', user=self.user)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
+
+    def test_check_rules_user_inactive(self):
+        self.user.is_active = False
+        self.user.save()
+
+        result = rules.check_rules('12345', user=self.user)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'User Inactive'))
+
+    def test_check_rules_user_subscription(self):
+        rules.create_subscription(self.voucher, self.package)
+        ps = rules.check_rules('12345', user=self.user)
+        self.assertEqual(ps.radcheck.username, self.username)
+        self.assertTrue(isinstance(ps, PackageSubscription))
+
+    def test_check_rules_voucher_password_incorrect(self):
+        result = rules.check_rules('00000', voucher=self.voucher)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'Voucher Password Incorrect'))
+
+    def test_check_rules_voucher_subscription(self):
+        voucher = Radcheck.objects.create(user=None, username='u@u.com',
+            attribute='MD5-Password', op=':=', value=md5_password('00000'))
+        rules.create_subscription(voucher, self.package)
+
+        ps = rules.check_rules('00000', voucher=voucher)
+        self.assertEqual(ps.radcheck.username, 'u@u.com')
+        self.assertTrue(isinstance(ps, PackageSubscription))
 
     def tearDown(self):
         self.user.delete() # This also deletes self.subscriber
