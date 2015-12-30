@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 
 from accounts.helpers import md5_password
 from accounts.models import Radcheck, AccessPoint
+from packages.models import InstantVoucher, Package
 
 
 class AuthorizeTestCase(unittest.TestCase):
@@ -40,27 +41,6 @@ class AuthorizeTestCase(unittest.TestCase):
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1][0], ('Reply-Message', 'User account or Voucher does not exist.'))
 
-    def test_voucher_password_incorrect(self):
-        voucher = Radcheck.objects.create(user=None, username='c@c.com',
-            attribute='MD5-Password', op=':=', value=md5_password('00000'))
-
-        result = rules.authorize(self.p)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'Voucher Password Incorrect'))
-
-        voucher.delete()
-
-    def test_user_password_incorrect(self):
-        user = User.objects.create_user('c@c.com', 'c@c.com', '00000')
-
-        result = rules.authorize(self.p)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
-
-        user.delete()
-
     def test_ap_not_found(self):
         p = (
             ('Called-Station-Id', '"00-18-0A-F2-DE-18:Radius test"'),
@@ -71,17 +51,58 @@ class AuthorizeTestCase(unittest.TestCase):
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1][0], ('Reply-Message', 'AP Not Found. Please call customer care.'))
 
-    def test_user_inactive(self):
-        user = User.objects.create_user('c@c.com', 'c@c.com', '12345')
-        user.is_active = False
-        user.save()
+    def test_user_has_no_subscription(self):
+        self.ap.status = 'PUB'
+        self.ap.save()
+        username = 'c@c.com'
+        password = '12345'
+        user = User.objects.create_user(username, username, password)
+        voucher = Radcheck.objects.create(user=user, username=username,
+            attribute='MD5-Password', op=':=', value=md5_password(password))
 
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'User Inactive'))
+        self.assertEqual(result[1][0], ('Reply-Message', 'User Has No Subscription.'))
 
+        voucher.delete()
         user.delete()
+
+    # Refactor these
+    def test_user_unauthorized(self):
+        voucher = Radcheck.objects.create(user=None, username='c@c.com',
+            attribute='MD5-Password', op=':=', value=md5_password('12345'))
+        package = Package.objects.create(package_type='Daily', volume='3', speed='1.5', price=4)
+        iv = InstantVoucher.objects.create(radcheck=voucher, package=package)
+
+        result = rules.authorize(self.p)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'User Unauthorized.'))
+
+        iv.delete()
+        package.delete()
+        voucher.delete()
+
+    def test_authorize_response(self):
+        self.ap.status = 'PUB'
+        self.ap.save()
+        voucher = Radcheck.objects.create(user=None, username='c@c.com',
+            attribute='MD5-Password', op=':=', value=md5_password('12345'))
+        package = Package.objects.create(package_type='Daily', volume='3', speed='1.5', price=4)
+        iv = InstantVoucher.objects.create(radcheck=voucher, package=package)
+
+        result = rules.authorize(self.p)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 2)
+        self.assertEqual(result[1][0][0], 'Session-Timeout')
+        self.assertEqual(result[1][1][0], 'Maximum-Data-Rate-Upstream')
+        self.assertEqual(result[1][2][0], 'Maximum-Data-Rate-Downstream')
+
+        iv.delete()
+        package.delete()
+        voucher.delete()
+    #####
 
     def tearDown(self):
         self.ap.delete()

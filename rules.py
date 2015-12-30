@@ -249,26 +249,25 @@ def authorize(p):
             (('Reply-Message', 'User account or Voucher does not exist.'),), (('Auth-Type', 'python'),)) 
 
     if user:
-        check_rules(password, user=user)
-
-    if voucher:
-        check_rules(password, voucher=voucher)
+        subscription = check_rules(password, user=user)
+    elif voucher:
+        subscription = check_rules(password, voucher=voucher)
 
     # Check whether AP allows user.
     if not check_user_eligibility_on_ap(user, ap):
         return (radiusd.RLM_MODULE_REJECT,
-            (('Reply-Message', 'User Unauthorized'),), (('Auth-Type', 'python'),))
+            (('Reply-Message', 'User Unauthorized.'),), (('Auth-Type', 'python'),))
 
     # Check subscription validity
     print_info('*** Check User Subscription Validity ... ***')
-    response = check_subscription_validity(subscription)
-
-    if not response:
+    if not subscription:
         print_info('*** User Has No Subscription... ***')
         return (radiusd.RLM_MODULE_REJECT,
-                (('Reply-Message', 'User Has No Subscription'),), (('Auth-Type', 'python'),))
+                (('Reply-Message', 'User Has No Subscription.'),), (('Auth-Type', 'python'),))
+    else:
+        response = check_subscription_validity(subscription)
 
     return response
 
-if __name__ == '__main__':
-    print authorize(p)
+# if __name__ == '__main__':
+    # print authorize(p)
