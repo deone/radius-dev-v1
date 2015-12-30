@@ -297,6 +297,8 @@ class FunctionsTestCase(unittest.TestCase):
         self.assertEqual(ps.radcheck.username, 'u@u.com')
         self.assertTrue(isinstance(ps, PackageSubscription))
 
+        voucher.delete()
+
     def tearDown(self):
         self.user.delete() # This also deletes self.subscriber
         self.voucher.delete()
