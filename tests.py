@@ -190,6 +190,7 @@ class FunctionsTestCase(unittest.TestCase):
         subscriber.save()
         subscription = rules.get_user_subscription(self.user)
         self.assertEqual(subscription, None)
+        group.delete()
     ##############
 
     def test_get_user(self):
