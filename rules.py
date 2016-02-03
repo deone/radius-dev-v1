@@ -89,13 +89,13 @@ def get_user_subscription(user):
     except:
         try:
             subscription = user.radcheck.packagesubscription_set.all()[0]
-        except IndexError:
+        except:
             return None
     else:
         # User belongs to a group. Return group package subscription
         try:
             subscription = subscriber.group.grouppackagesubscription_set.all()[0]
-        except IndexError:
+        except:
             return None
 
     return subscription
