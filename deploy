@@ -5,10 +5,10 @@ INSTPATH=/usr/lib/python2.7/site-packages
 
 echo "Removing obsolete files..."
 rm $INSTPATH/rules.py
-rm -rf $INSTPATH/billing $INSTPATH/accounts $INSTPATH/longer_username $INSTPATH/packages $INSTPATH/payments
+rm -rf $INSTPATH/billing $INSTPATH/accounts $INSTPATH/longer_username $INSTPATH/packages $INSTPATH/payments $INSTPATH/search
 
 echo "Copying new files to site-packages..."
 cp rules.py $INSTPATH
-cp -r $BILLINGPATH/billing $BILLINGPATH/accounts $BILLINGPATH/longer_username $BILLINGPATH/packages $BILLINGPATH/payments $INSTPATH
+cp -r $BILLINGPATH/billing $BILLINGPATH/accounts $BILLINGPATH/longer_username $BILLINGPATH/packages $BILLINGPATH/payments $BILLINGPATH/search $INSTPATH
 
 echo "Deployment done"
