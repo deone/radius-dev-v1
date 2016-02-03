@@ -263,8 +263,7 @@ def authorize(p):
     if not subscription:
         print_info('*** User Has No Subscription... ***')
         return (radiusd.RLM_MODULE_REJECT,
-                # (('Reply-Message', "User Has No Subscription.<br>Topup your account and purchase package <a href='" + settings.LOGIN_URL + "'>here</a>."),), (('Auth-Type', 'python'),))
-                (('Reply-Message', "User Has No Subscription.<br>Topup your account and purchase package <a href='#'>here</a>."),), (('Auth-Type', 'python'),))
+                (('Reply-Message', "You have no subscription. Click 'Manage Account' below to recharge your account and purchase a package."),), (('Auth-Type', 'python'),))
     else:
         response = check_subscription_validity(subscription)
 
