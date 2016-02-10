@@ -24,6 +24,10 @@ from accounts.models import AccessPoint, Radcheck
 from accounts.helpers import md5_password
 from packages.models import InstantVoucher, PackageSubscription
 
+REPLY_CODES_MESSAGES = {
+    'vpi': 'Voucher Password Incorrect'
+}
+
 def print_info(info):
     radiusd.radlog(radiusd.L_INFO, info)
 
@@ -130,8 +134,7 @@ def get_ap(ap_mac):
 
 def check_voucher_password(voucher, password):
     if not md5_password(password) == voucher.value:
-        print_info('*** - Voucher Password Incorrect! ***')
-        return False
+        return 'vpi'
     else:
         print_info('*** - Voucher Password Correct :-( ***')
         return True
@@ -200,7 +203,7 @@ def check_rules(password, user=None, voucher=None):
 
         return get_user_subscription(user)
 
-    if user is None and voucher is not None:
+    """ if user is None and voucher is not None:
         print_info('*** - Voucher fetched successfully: ' + voucher.username + ' ***')
 
         # Check Password
@@ -213,7 +216,7 @@ def check_rules(password, user=None, voucher=None):
         print_info('*** Checking User Account Status... ***')
         print_info("*** We're skipping account status check for voucher ***")
 
-        return get_or_create_subscription(voucher)
+        return get_or_create_subscription(voucher) """
 
 def authorize(p):
     print_info("*** Request Content: " + str(p) + " ***")
@@ -251,7 +254,21 @@ def authorize(p):
     if user:
         subscription = check_rules(password, user=user)
     elif voucher:
-        subscription = check_rules(password, voucher=voucher)
+        # subscription = check_rules(password, voucher=voucher)
+        print_info('*** - Voucher fetched successfully: ' + voucher.username + ' ***')
+
+        # Check Password
+        print_info('*** Checking Password... ***')
+        result = check_voucher_password(password, voucher=voucher)
+        if result in REPLY_CODES_MESSAGES:
+            print_info('*** - ' + REPLY_CODES_MESSAGES[result] + ' ***')
+            return (radiusd.RLM_MODULE_REJECT,
+                    (('Reply-Message', REPLY_CODES_MESSAGES[result]),), (('Auth-Type', 'python'),))
+        else:
+            print_info('*** Checking User Account Status... ***')
+            print_info("*** We're skipping account status check for voucher ***")
+
+            return get_or_create_subscription(voucher)
 
     # Check whether AP allows user.
     if not check_user_eligibility_on_ap(user, ap):
