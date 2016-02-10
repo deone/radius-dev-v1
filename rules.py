@@ -132,11 +132,11 @@ def get_ap(ap_mac):
         print_info('*** - AP fetched successfully: ' + ap.mac_address + ' ***')
         return ap
 
-def check_voucher_password(voucher, password):
-    if not md5_password(password) == voucher.value:
-        return 'vpi'
+def check_voucher_password(voucher_password, user_password):
+    if md5_password(user_password) != voucher_password:
+	return 'vpi'
     else:
-        print_info('*** - Voucher Password Correct :-( ***')
+        print_info('*** - Voucher Password Correct :-) ***')
         return True
 
 def check_user_password(user, password):
@@ -259,7 +259,7 @@ def authorize(p):
 
         # Check Password
         print_info('*** Checking Password... ***')
-        result = check_voucher_password(password, voucher=voucher)
+        result = check_voucher_password(str(voucher.value), password)
         if result in REPLY_CODES_MESSAGES:
             print_info('*** - ' + REPLY_CODES_MESSAGES[result] + ' ***')
             return (radiusd.RLM_MODULE_REJECT,
