@@ -222,14 +222,16 @@ class FunctionsTestCase(unittest.TestCase):
 
     def test_check_voucher_password_invalid(self):
         invalid = rules.check_voucher_password(self.voucher, '00000')
-        self.assertEqual(invalid, 'vpi')
+        self.assertEqual(invalid, 'VPI')
         self.assertEqual(rules.REPLY_CODES_MESSAGES[invalid], 'Voucher Password Incorrect')
 
     def test_check_user_password_valid(self):
         self.assertTrue(rules.check_user_password(self.user, '12345'))
 
     def test_check_user_password_invalid(self):
-        self.assertFalse(rules.check_user_password(self.user, '00000'))
+        invalid = rules.check_user_password(self.user, '00000')
+        self.assertEqual(invalid, 'UPI')
+        self.assertEqual(rules.REPLY_CODES_MESSAGES[invalid], 'User Password Incorrect')
 
     def test_check_user_account_status_valid(self):
         self.assertTrue(rules.check_user_account_status(self.user))
@@ -237,7 +239,9 @@ class FunctionsTestCase(unittest.TestCase):
     def test_check_user_account_status_invalid(self):
         self.user.is_active = False
         self.user.save()
-        self.assertFalse(rules.check_user_account_status(self.user))
+        invalid = rules.check_user_account_status(self.user)
+        self.assertEqual(invalid, 'UIN')
+        self.assertEqual(rules.REPLY_CODES_MESSAGES[invalid], 'User Inactive')
 
     def test_check_user_eligibility_on_ap_valid(self):
         self.ap.status = 'PUB'
