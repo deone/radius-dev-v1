@@ -90,19 +90,16 @@ def get_or_create_subscription(voucher):
     return subscription
 
 def get_user_subscription(user):
-    try:
-        subscriber = user.subscriber
-    except:
+    if user.subscriber.group is not None:
         try:
-            subscription = user.radcheck.packagesubscription_set.all()[0]
-        except:
-            return None
+	    subscription = user.subscriber.group.grouppackagesubscription_set.all()[0]
+	except:
+	    return None
     else:
-        # User belongs to a group. Return group package subscription
-        try:
-            subscription = subscriber.group.grouppackagesubscription_set.all()[0]
-        except:
-            return None
+	try:
+            subscription = user.radcheck.packagesubscription_set.all()[0]
+	except:
+	    return None
 
     return subscription
 
