@@ -185,40 +185,10 @@ def check_subscription_validity(subscription):
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
 
-def check_rules(password, user=None, voucher=None):
-    if voucher is None and user is not None:
-        print_info('*** - User fetched successfully: ' + user.username + ' ***')
-
-        # Check Password
-        print_info('*** Checking Password... ***')
-        code = check_user_password(user, password)
-        return display_reply_message(code)
-
-        # Check User Account Status
-        print_info('*** Checking User Account Status... ***')
-        code = check_user_account_status(user)
-        return display_reply_message(code)
-
-        return get_user_subscription(user)
-
-    if user is None and voucher is not None:
-        print_info('*** - Voucher fetched successfully: ' + voucher.username + ' ***')
-
-        # Check Password
-        print_info('*** Checking Password... ***')
-        code = check_voucher_password(str(voucher.value), password)
-        return display_reply_message(code)
-
-        print_info('*** Checking User Account Status... ***')
-        print_info("*** We're skipping account status check for voucher ***")
-
-        return get_or_create_subscription(voucher)
-
 def display_reply_message(error_code):
-    if error_code in REPLY_CODES_MESSAGES:
-        print_info('*** - ' + REPLY_CODES_MESSAGES[error_code] + ' ***')
-        return (radiusd.RLM_MODULE_REJECT,
-                (('Reply-Message', REPLY_CODES_MESSAGES[error_code]),), (('Auth-Type', 'python'),))
+    print_info('*** - ' + REPLY_CODES_MESSAGES[error_code] + ' ***')
+    return (radiusd.RLM_MODULE_REJECT,
+            (('Reply-Message', REPLY_CODES_MESSAGES[error_code]),), (('Auth-Type', 'python'),))
 
 def authorize(p):
     print_info("*** Request Content: " + str(p) + " ***")
@@ -251,15 +221,43 @@ def authorize(p):
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'User account or Voucher does not exist.'),), (('Auth-Type', 'python'),)) 
 
-    if user:
-        subscription = check_rules(password, user=user)
-    elif voucher:
-        subscription = check_rules(password, voucher=voucher)
-
     # Check whether AP allows user.
     if not check_user_eligibility_on_ap(user, ap):
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'User Unauthorized.'),), (('Auth-Type', 'python'),))
+
+    if user:
+        # subscription = check_rules(password, user=user)
+        print_info('*** - User fetched successfully: ' + user.username + ' ***')
+
+        # Check Password
+        print_info('*** Checking Password... ***')
+        code = check_user_password(user, password)
+        if code in REPLY_CODES_MESSAGES:
+            return display_reply_message(code)
+
+        # Check User Account Status
+        print_info('*** Checking User Account Status... ***')
+        code = check_user_account_status(user)
+        if code in REPLY_CODES_MESSAGES:
+            return display_reply_message(code)
+
+        subscription = get_user_subscription(user)
+
+    elif voucher:
+        # subscription = check_rules(password, voucher=voucher)
+        print_info('*** - Voucher fetched successfully: ' + voucher.username + ' ***')
+
+        # Check Password
+        print_info('*** Checking Password... ***')
+        code = check_voucher_password(str(voucher.value), password)
+        if code in REPLY_CODES_MESSAGES:
+            return display_reply_message(code)
+
+        print_info('*** Checking User Account Status... ***')
+        print_info("*** We're skipping account status check for voucher ***")
+
+        subscription = get_or_create_subscription(voucher)
 
     # Check subscription validity
     print_info('*** Check User Subscription Validity ... ***')
@@ -269,8 +267,7 @@ def authorize(p):
                 (('Reply-Message', "You have no subscription. Click 'Manage Account' below to recharge your account and purchase a package."),), (('Auth-Type', 'python'),))
     else:
         response = check_subscription_validity(subscription)
-
-    return response
+        return response
 
 # if __name__ == '__main__':
     # print authorize(p)
