@@ -161,11 +161,14 @@ class FunctionsTestCase(unittest.TestCase):
         subscription.delete()
 
     def test_get_user_subscription(self):
+        subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
         rules.create_subscription(self.voucher, self.package)
         subscription = rules.get_user_subscription(self.user)
         self.assertTrue(isinstance(subscription, PackageSubscription))
+        subscription.delete()
 
     def test_get_user_subscription_None(self):
+        subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
         subscription = rules.get_user_subscription(self.user)
         self.assertEqual(subscription, None)
 
