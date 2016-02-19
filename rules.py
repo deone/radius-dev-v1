@@ -224,7 +224,6 @@ def authorize(p):
             (('Reply-Message', 'User Unauthorized.'),), (('Auth-Type', 'python'),))
 
     if user:
-        # subscription = check_rules(password, user=user)
         print_info('*** - User fetched successfully: ' + user.username + ' ***')
 
         # Check Password
@@ -242,7 +241,6 @@ def authorize(p):
         subscription = get_user_subscription(user)
 
     elif voucher:
-        # subscription = check_rules(password, voucher=voucher)
         print_info('*** - Voucher fetched successfully: ' + voucher.username + ' ***')
 
         # Check Password
