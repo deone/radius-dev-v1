@@ -17,7 +17,7 @@ from accounts.models import Radcheck, Subscriber, GroupAccount, AccessPoint
 from packages.models import (Package, PackageSubscription, GroupPackageSubscription, InstantVoucher)
 
 
-""" class AuthorizeTestCase(unittest.TestCase):
+class AuthorizeTestCase(unittest.TestCase):
 
     def setUp(self):
         self.p = (
@@ -60,13 +60,14 @@ from packages.models import (Package, PackageSubscription, GroupPackageSubscript
         username = 'c@c.com'
         password = '12345'
         user = User.objects.create_user(username, username, password)
+        subscriber = Subscriber.objects.create(user=user, country='NGA', phone_number='+2348029299274')
         voucher = Radcheck.objects.create(user=user, username=username,
             attribute='MD5-Password', op=':=', value=md5_password(password))
 
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'User Has No Subscription.'))
+        self.assertEqual(result[1][0], ('Reply-Message', "You have no subscription. Click 'Manage Account' below to recharge your account and purchase a package."))
 
         voucher.delete()
         user.delete()
@@ -108,11 +109,11 @@ from packages.models import (Package, PackageSubscription, GroupPackageSubscript
     #####
 
     def tearDown(self):
-        self.ap.delete() """
+        self.ap.delete()
 
 
 
-class FunctionsTestCase(unittest.TestCase):
+""" class FunctionsTestCase(unittest.TestCase):
 
     def setUp(self):
         self.p = (
@@ -271,50 +272,12 @@ class FunctionsTestCase(unittest.TestCase):
         self.assertEqual(response[0], 0)
         subscription.delete()
 
-    """ def test_check_rules_user_password_incorrect(self):
-        result = rules.check_rules('00000', user=self.user)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
-
-    def test_check_rules_user_inactive(self):
-        self.user.is_active = False
-        self.user.save()
-
-        result = rules.check_rules('12345', user=self.user)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'User Inactive'))
-
-    def test_check_rules_user_subscription(self):
-        rules.create_subscription(self.voucher, self.package)
-        ps = rules.check_rules('12345', user=self.user)
-        self.assertEqual(ps.radcheck.username, self.username)
-        self.assertTrue(isinstance(ps, PackageSubscription))
-
-    def test_check_rules_voucher_password_incorrect(self):
-        result = rules.check_rules('00000', voucher=self.voucher)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'Voucher Password Incorrect'))
-
-    def test_check_rules_voucher_subscription(self):
-        voucher = Radcheck.objects.create(user=None, username='u@u.com',
-            attribute='MD5-Password', op=':=', value=md5_password('00000'))
-        rules.create_subscription(voucher, self.package)
-
-        ps = rules.check_rules('00000', voucher=voucher)
-        self.assertEqual(ps.radcheck.username, 'u@u.com')
-        self.assertTrue(isinstance(ps, PackageSubscription))
-
-        voucher.delete() """
-
     def tearDown(self):
         self.user.delete() # This also deletes self.subscriber
         self.voucher.delete()
         self.ivoucher.delete()
         self.package.delete()
-        self.ap.delete()
+        self.ap.delete() """
 
 # suite = unittest.TestSuite([AuthorizeTestCase('test_success'), AuthorizeTestCase('test_fail')])
 # suite.run(unittest.TestResult())

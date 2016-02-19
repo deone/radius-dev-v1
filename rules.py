@@ -142,7 +142,7 @@ def check_user_password(user, password):
     if not user.check_password(password):
         return 'UPI'
     else:
-        print_info('*** - User Password Correct :-( ***')
+        print_info('*** - User Password Correct :-) ***')
         return True 
 
 def check_user_account_status(user):
