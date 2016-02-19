@@ -72,6 +72,20 @@ class AuthorizeTestCase(unittest.TestCase):
         voucher.delete()
         user.delete()
 
+    def test_user_password_incorrect(self):
+        self.ap.status = 'PUB'
+        self.ap.save()
+
+        user = User.objects.create_user('c@c.com', 'c@c.com', '00000')
+        subscriber = Subscriber.objects.create(user=user, country='NGA', phone_number='+2348029299274')
+
+        result = rules.authorize(self.p)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
+
+        user.delete()
+
     # Refactor these
     def test_user_unauthorized(self):
         voucher = Radcheck.objects.create(user=None, username='c@c.com',
