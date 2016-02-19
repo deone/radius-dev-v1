@@ -113,7 +113,7 @@ class AuthorizeTestCase(unittest.TestCase):
 
 
 
-""" class FunctionsTestCase(unittest.TestCase):
+class FunctionsTestCase(unittest.TestCase):
 
     def setUp(self):
         self.p = (
@@ -277,7 +277,7 @@ class AuthorizeTestCase(unittest.TestCase):
         self.voucher.delete()
         self.ivoucher.delete()
         self.package.delete()
-        self.ap.delete() """
+        self.ap.delete()
 
 # suite = unittest.TestSuite([AuthorizeTestCase('test_success'), AuthorizeTestCase('test_fail')])
 # suite.run(unittest.TestResult())
