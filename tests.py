@@ -122,16 +122,14 @@ class AuthorizeUserTestCase(AuthorizeTestCase):
 
         voucher.delete()
 
-    """ def test_user_password_incorrect(self):
-        user = User.objects.create_user('c@c.com', 'c@c.com', '00000')
-        subscriber = Subscriber.objects.create(user=user, country='NGA', phone_number='+2348029299274')
+    def test_user_password_incorrect(self):
+        self.user.set_password('00000')
+        self.user.save()
 
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
-
-        user.delete() """
 
     def tearDown(self):
         self.ap.delete()
