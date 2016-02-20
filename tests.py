@@ -68,27 +68,18 @@ class AuthorizeVoucherTestCase(AuthorizeTestCase):
         super(AuthorizeVoucherTestCase, self).setUp(*args, **kwargs)
         self.voucher = Radcheck.objects.create(user=None, username='c@c.com',
             attribute='MD5-Password', op=':=', value=md5_password('12345'))
+        self.package = Package.objects.create(package_type='Daily', volume='3', speed='1.5', price=4)
+        self.iv = InstantVoucher.objects.create(radcheck=self.voucher, package=self.package)
 
-    # Refactor these
     def test_user_unauthorized(self):
-        package = Package.objects.create(package_type='Daily', volume='3', speed='1.5', price=4)
-        iv = InstantVoucher.objects.create(radcheck=self.voucher, package=package)
-
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1][0], ('Reply-Message', 'User Unauthorized.'))
 
-        iv.delete()
-        package.delete()
-
-    """ def test_authorize_response(self):
+    def test_authorize_response(self):
         self.ap.status = 'PUB'
         self.ap.save()
-        voucher = Radcheck.objects.create(user=None, username='c@c.com',
-            attribute='MD5-Password', op=':=', value=md5_password('12345'))
-        package = Package.objects.create(package_type='Daily', volume='3', speed='1.5', price=4)
-        iv = InstantVoucher.objects.create(radcheck=voucher, package=package)
 
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
@@ -97,14 +88,11 @@ class AuthorizeVoucherTestCase(AuthorizeTestCase):
         self.assertEqual(result[1][1][0], 'Maximum-Data-Rate-Upstream')
         self.assertEqual(result[1][2][0], 'Maximum-Data-Rate-Downstream')
 
-        iv.delete()
-        package.delete()
-        voucher.delete() """
-    #####
-
     def tearDown(self):
         self.ap.delete()
         self.voucher.delete()
+        self.package.delete()
+        self.iv.delete()
 
 
 class AuthorizeUserTestCase(AuthorizeTestCase):
