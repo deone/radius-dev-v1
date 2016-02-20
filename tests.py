@@ -38,6 +38,11 @@ class AuthorizeTestCase(unittest.TestCase):
 
         self.ap = AccessPoint.objects.create(name='My AP', mac_address='00:18:0A:F2:DE:15')
 
+class AuthorizeVoucherTestCase(AuthorizeTestCase):
+
+    def setUp(self, *args, **kwargs):
+        super(AuthorizeVoucherTestCase, self).setUp(*args, **kwargs)
+
     def test_user_voucher_None(self):
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
