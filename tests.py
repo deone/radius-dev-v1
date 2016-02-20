@@ -54,38 +54,6 @@ class AuthorizeTestCase(unittest.TestCase):
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1][0], ('Reply-Message', 'AP Not Found. Please call customer care.'))
 
-    def test_user_has_no_subscription(self):
-        self.ap.status = 'PUB'
-        self.ap.save()
-        username = 'c@c.com'
-        password = '12345'
-        user = User.objects.create_user(username, username, password)
-        subscriber = Subscriber.objects.create(user=user, country='NGA', phone_number='+2348029299274')
-        voucher = Radcheck.objects.create(user=user, username=username,
-            attribute='MD5-Password', op=':=', value=md5_password(password))
-
-        result = rules.authorize(self.p)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', "You have no subscription. Click 'Manage Account' below to recharge your account and purchase a package."))
-
-        voucher.delete()
-        user.delete()
-
-    def test_user_password_incorrect(self):
-        self.ap.status = 'PUB'
-        self.ap.save()
-
-        user = User.objects.create_user('c@c.com', 'c@c.com', '00000')
-        subscriber = Subscriber.objects.create(user=user, country='NGA', phone_number='+2348029299274')
-
-        result = rules.authorize(self.p)
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], 0)
-        self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
-
-        user.delete()
-
     # Refactor these
     def test_user_unauthorized(self):
         voucher = Radcheck.objects.create(user=None, username='c@c.com',
@@ -125,6 +93,61 @@ class AuthorizeTestCase(unittest.TestCase):
     def tearDown(self):
         self.ap.delete()
 
+
+class AuthorizeUserTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.p = (
+            ('Acct-Session-Id', '"624874448299458941"'),
+            ('Called-Station-Id', '"00-18-0A-F2-DE-15:Radius test"'),
+            ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'),
+            ('Framed-IP-Address', '172.31.3.142'),
+            ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'),
+            ('NAS-IP-Address', '108.161.147.120'),
+            ('NAS-Port', '0'),
+            ('NAS-Port-Id', '"Wireless-802.11"'),
+            ('NAS-Port-Type', 'Wireless-802.11'),
+            ('Service-Type', 'Login-User'),
+            ('User-Name', '"c@c.com"'),
+            ('User-Password', '"12345"'),
+            ('Attr-26.29671.1', '0x446a756e676c65204851203032')
+            )
+        self.ap = AccessPoint.objects.create(name='My AP', mac_address='00:18:0A:F2:DE:15')
+
+    def test_user_has_no_subscription(self):
+        self.ap.status = 'PUB'
+        self.ap.save()
+        username = 'c@c.com'
+        password = '12345'
+        user = User.objects.create_user(username, username, password)
+        subscriber = Subscriber.objects.create(user=user, country='NGA', phone_number='+2348029299274')
+        voucher = Radcheck.objects.create(user=user, username=username,
+            attribute='MD5-Password', op=':=', value=md5_password(password))
+
+        result = rules.authorize(self.p)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', "You have no subscription. Click 'Manage Account' below to recharge your account and purchase a package."))
+
+        voucher.delete()
+        user.delete()
+
+    def test_user_password_incorrect(self):
+        self.ap.status = 'PUB'
+        self.ap.save()
+
+        user = User.objects.create_user('c@c.com', 'c@c.com', '00000')
+        subscriber = Subscriber.objects.create(user=user, country='NGA', phone_number='+2348029299274')
+
+        result = rules.authorize(self.p)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
+
+        user.delete()
+
+    def tearDown(self):
+        self.ap.delete()
 
 
 class FunctionsTestCase(unittest.TestCase):
