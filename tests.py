@@ -139,7 +139,13 @@ class AuthorizeUserTestCase(AuthorizeTestCase):
         self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
 
     def test_user_inactive(self):
-        pass 
+        self.user.is_active = False
+        self.user.save()
+
+        result = rules.authorize(self.p)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'User Inactive'))
 
     def tearDown(self):
         self.ap.delete()
