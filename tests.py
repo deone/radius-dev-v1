@@ -99,25 +99,10 @@ class AuthorizeVoucherTestCase(AuthorizeTestCase):
         self.ap.delete()
 
 
-class AuthorizeUserTestCase(unittest.TestCase):
+class AuthorizeUserTestCase(AuthorizeTestCase):
 
-    def setUp(self):
-        self.p = (
-            ('Acct-Session-Id', '"624874448299458941"'),
-            ('Called-Station-Id', '"00-18-0A-F2-DE-15:Radius test"'),
-            ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'),
-            ('Framed-IP-Address', '172.31.3.142'),
-            ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'),
-            ('NAS-IP-Address', '108.161.147.120'),
-            ('NAS-Port', '0'),
-            ('NAS-Port-Id', '"Wireless-802.11"'),
-            ('NAS-Port-Type', 'Wireless-802.11'),
-            ('Service-Type', 'Login-User'),
-            ('User-Name', '"c@c.com"'),
-            ('User-Password', '"12345"'),
-            ('Attr-26.29671.1', '0x446a756e676c65204851203032')
-            )
-        self.ap = AccessPoint.objects.create(name='My AP', mac_address='00:18:0A:F2:DE:15')
+    def setUp(self, *args, **kwargs):
+        super(AuthorizeUserTestCase, self).setUp(*args, **kwargs)
 
     def test_user_has_no_subscription(self):
         self.ap.status = 'PUB'
