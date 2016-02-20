@@ -70,17 +70,28 @@ class AuthorizeVoucherTestCase(AuthorizeTestCase):
             attribute='MD5-Password', op=':=', value=md5_password('12345'))
         self.package = Package.objects.create(package_type='Daily', volume='3', speed='1.5', price=4)
         self.iv = InstantVoucher.objects.create(radcheck=self.voucher, package=self.package)
+        self.ap.status = 'PUB'
+        self.ap.save()
+
+    def test_voucher_password_incorrect(self):
+        self.voucher.value = md5_password('00000')
+        self.voucher.save()
+
+        result = rules.authorize(self.p)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1][0], ('Reply-Message', 'Voucher Password Incorrect'))
 
     def test_user_unauthorized(self):
+        self.ap.status = 'PRV'
+        self.ap.save()
+
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1][0], ('Reply-Message', 'User Unauthorized.'))
 
     def test_authorize_response(self):
-        self.ap.status = 'PUB'
-        self.ap.save()
-
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 2)
@@ -126,6 +137,9 @@ class AuthorizeUserTestCase(AuthorizeTestCase):
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1][0], ('Reply-Message', 'User Password Incorrect'))
+
+    def test_user_inactive(self):
+        pass 
 
     def tearDown(self):
         self.ap.delete()
