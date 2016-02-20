@@ -103,10 +103,10 @@ class AuthorizeUserTestCase(AuthorizeTestCase):
 
     def setUp(self, *args, **kwargs):
         super(AuthorizeUserTestCase, self).setUp(*args, **kwargs)
-
-    def test_user_has_no_subscription(self):
         self.ap.status = 'PUB'
         self.ap.save()
+
+    def test_user_has_no_subscription(self):
         username = 'c@c.com'
         password = '12345'
         user = User.objects.create_user(username, username, password)
@@ -123,9 +123,6 @@ class AuthorizeUserTestCase(AuthorizeTestCase):
         user.delete()
 
     def test_user_password_incorrect(self):
-        self.ap.status = 'PUB'
-        self.ap.save()
-
         user = User.objects.create_user('c@c.com', 'c@c.com', '00000')
         subscriber = Subscriber.objects.create(user=user, country='NGA', phone_number='+2348029299274')
 
