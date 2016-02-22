@@ -297,7 +297,7 @@ class FunctionsTestCase(unittest.TestCase):
 
     def test_check_subscription_validity_valid(self):
         subscription = rules.get_or_create_subscription(self.voucher)
-        response = rules.check_subscription_validity(subscription)
+        response = rules.check_subscription_validity(subscription, self.user)
         self.assertEqual(len(response), 3)
         self.assertEqual(response[0], 2)
         subscription.delete()
@@ -306,7 +306,7 @@ class FunctionsTestCase(unittest.TestCase):
         subscription = rules.get_or_create_subscription(self.voucher)
         subscription.stop = self.now - timedelta(hours=PACKAGE_TYPES_HOURS_MAP[subscription.package.package_type])
         subscription.save()
-        response = rules.check_subscription_validity(subscription)
+        response = rules.check_subscription_validity(subscription, self.user)
         self.assertEqual(len(response), 3)
         self.assertEqual(response[0], 0)
         subscription.delete()
