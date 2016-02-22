@@ -299,6 +299,7 @@ class FunctionsTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.user.delete() # This also deletes self.subscriber
+        self.group.delete()
         self.voucher.delete()
         self.ivoucher.delete()
         self.package.delete()
