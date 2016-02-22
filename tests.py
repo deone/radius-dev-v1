@@ -116,18 +116,13 @@ class AuthorizeUserTestCase(AuthorizeTestCase):
         self.username = 'c@c.com'
         self.password = '12345'
         self.user = User.objects.create_user(self.username, self.username, self.password)
-        subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
+        Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
 
     def test_user_has_no_subscription(self):
-        voucher = Radcheck.objects.create(user=self.user, username=self.username,
-            attribute='MD5-Password', op=':=', value=md5_password(self.password))
-
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1][0], ('Reply-Message', "You have no subscription. Click 'Manage Account' below to recharge your account and purchase a package."))
-
-        voucher.delete()
 
     def test_user_password_incorrect(self):
         self.user.set_password('00000')
@@ -181,10 +176,8 @@ class FunctionsTestCase(unittest.TestCase):
         self.password = rules.trim_value(self.params['User-Password'])
 
         self.user = User.objects.create_user(self.username, self.username, self.password)
-        self.subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
         self.group = GroupAccount.objects.create(name='CUG', max_no_of_users=10)
-        self.subscriber.group = self.group
-        self.subscriber.save()
+        self.subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274', group=self.group)
         self.voucher = Radcheck.objects.create(user=self.user, username=self.username,
             attribute='MD5-Password', op=':=', value=md5_password(self.password))
         self.package = Package.objects.create(package_type='Daily',
@@ -204,6 +197,9 @@ class FunctionsTestCase(unittest.TestCase):
         self.assertTrue(isinstance(subscription, PackageSubscription))
         subscription.delete()
 
+    def test_set_logged_in(self):
+        self.assertTrue(rules.set_logged_in(self.user))
+
     def test_get_user_subscription(self):
         self.user.subscriber.group = None
         rules.create_subscription(self.voucher, self.package)
@@ -215,7 +211,6 @@ class FunctionsTestCase(unittest.TestCase):
         subscription = rules.get_user_subscription(self.user)
         self.assertEqual(subscription, None)
 
-    # Refactor these
     def test_get_user_subscription_group_valid(self):
         gps = GroupPackageSubscription.objects.create(group=self.group, package=self.package, start=self.now,
             stop=self.now + timedelta(hours=PACKAGE_TYPES_HOURS_MAP[self.package.package_type]))
@@ -227,7 +222,6 @@ class FunctionsTestCase(unittest.TestCase):
     def test_get_user_subscription_group_IndexError(self):
         subscription = rules.get_user_subscription(self.user)
         self.assertEqual(subscription, None)
-    ##############
 
     def test_get_user(self):
         user = rules.get_user(self.username)

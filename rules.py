@@ -161,6 +161,18 @@ def check_user_eligibility_on_ap(user, ap):
         print_info('*** - AP Disallowed User ***')
         return False
 
+def set_logged_in(user):
+    try:
+        subscriber = user.subscriber
+    except:
+        pass
+    else:
+        if subscriber.group is not None:
+            user.radcheck.is_logged_in = True
+            user.radcheck.save()
+
+    return user
+
 def check_subscription_validity(subscription, user):
     if subscription.is_valid():
         print_info('*** - User Subscription Valid ***')
@@ -172,15 +184,7 @@ def check_subscription_validity(subscription, user):
         bandwidth_limit = str(float(subscription.package.speed) * 1000000)
         bandwidth_limit = bandwidth_limit.split('.')[0]
 
-        # Set is_logged_in to True for group users
-        try:
-            subscriber = user.subscriber
-        except:
-            pass
-        else:
-            if subscriber.group is not None:
-                user.radcheck.is_logged_in = True
-                user.radcheck.save()
+        set_logged_in(user)
 
         print_info('*** - Sending Access-Accept to Meraki ***')
         return (radiusd.RLM_MODULE_OK,
