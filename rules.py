@@ -278,5 +278,17 @@ def authorize(p):
         response = check_subscription_validity(subscription, user)
         return response
 
+def accounting(p):
+    print_info("*** Request Content: " + str(p) + " ***")
+    params = dict(p)
+
+    username = trim_value(params['User-Name'])
+    acct_status_type = params['Acct-Status-Type']
+
+    if acct_status_type == 'Stop':
+        radcheck = Radcheck.objects.get(username__exact=username)
+	radcheck.is_logged_in = False
+	radcheck.save()
+
 # if __name__ == '__main__':
     # print authorize(p)
