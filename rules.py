@@ -188,7 +188,7 @@ def check_subscription_validity(subscription, user):
 
         print_info('*** - Sending Access-Accept to Meraki ***')
         return (radiusd.RLM_MODULE_OK,
-            (('Idle-Timeout', '0'),('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
+            (('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
             (('Auth-Type', 'python'),))
     else:
         print_info('*** - User Subscription Invalid ***')
