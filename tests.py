@@ -95,9 +95,10 @@ class AuthorizeVoucherTestCase(AuthorizeTestCase):
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 2)
-        self.assertEqual(result[1][0][0], 'Session-Timeout')
-        self.assertEqual(result[1][1][0], 'Maximum-Data-Rate-Upstream')
-        self.assertEqual(result[1][2][0], 'Maximum-Data-Rate-Downstream')
+        self.assertEqual(result[1][0][0], 'Idle-Timeout')
+        self.assertEqual(result[1][1][0], 'Session-Timeout')
+        self.assertEqual(result[1][2][0], 'Maximum-Data-Rate-Upstream')
+        self.assertEqual(result[1][3][0], 'Maximum-Data-Rate-Downstream')
 
     def tearDown(self):
         self.ap.delete()
