@@ -22,51 +22,6 @@ REPLY_CODES_MESSAGES = {
     'UIN': 'User Inactive',
 }
 
-INST = ()
-
-ACCESS_ACCEPT = (
-    ('Acct-Session-Id', '"624874448299458941"'),
-    ('Called-Station-Id', '"00-18-0A-F2-DE-20:Radius test"'),
-    ('Calling-Station-Id', '"48-D2-24-43-A6-C1"'),
-    ('Framed-IP-Address', '172.31.3.142'),
-    ('NAS-Identifier', '"Cisco Meraki cloud RADIUS client"'),
-    ('NAS-IP-Address', '108.161.147.120'),
-    ('NAS-Port', '0'),
-    ('NAS-Port-Id', '"Wireless-802.11"'),
-    ('NAS-Port-Type', 'Wireless-802.11'),
-    ('Service-Type', 'Login-User'),
-    ('User-Name', '"alwaysdeone@gmail.com"'),
-    ('User-Password', '"12345"'),
-    ('Attr-26.29671.1', '0x446a756e676c65204851203032')
-    )
-
-ACCT_STOP = (
-    ('User-Name', '"alwaysdeone@gmail.com"'),
-    ('Acct-Status-Type', 'Stop'),
-    ('NAS-IP-Address', '108.161.147.120'),
-    ('Event-Timestamp', '"Jun 24 2016 16:03:38 GMT"'),
-    ('Acct-Input-Packets', '283160'),
-    ('Acct-Output-Packets', '338826'),
-    ('Acct-Input-Octets', '255909888'),
-    ('NAS-Port-Type', 'Wireless-802.11'),
-    ('Acct-Session-Id', '"624874448301086964"'),
-    ('Acct-Terminate-Cause', 'Admin-Reset'),
-    ('Attr-26.29671.1', '0x47482d4b504f4c592d4353422d30312d3032'),
-    ('Calling-Station-Id', '"88-25-2C-E3-EF-E5"'),
-    ('NAS-Port-Id', '"Wireless-802.11"'),
-    ('NAS-Identifier', '"Meraki Cloud Controller RADIUS client"'),
-    ('Framed-IP-Address', '10.8.59.86'),
-    ('Called-Station-Id', '"00-18-0A-F2-E2-70:Spectra"'),
-    ('Acct-Input-Gigawords', '0'),
-    ('Service-Type', 'Login-User'),
-    ('Acct-Output-Octets', '19741696'),
-    ('NAS-Port', '0'),
-    ('Acct-Session-Time', '94463'),
-    ('Acct-Output-Gigawords', '0'),
-    ('Acct-Delay-Time', '133'),
-    ('Acct-Unique-Session-Id', '"9bdad742d9ec6fd7773efe9ce8f898ae"')
-    )
-
 def print_info(info):
     radiusd.radlog(radiusd.L_INFO, info)
 

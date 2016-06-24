@@ -121,8 +121,3 @@ def accounting(p):
         radcheck = Radcheck.objects.get(username__exact=username)
 	radcheck.is_logged_in = False
 	radcheck.save()
-
-if __name__ == '__main__':
-    instantiate(INST)
-    authorize(ACCESS_ACCEPT)
-    accounting(ACCT_STOP)
