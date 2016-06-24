@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from lib import *
+from radlib import *
 
 def instantiate(p):
     print_info('*** Instantiating Python module ***')
