@@ -43,9 +43,13 @@ def authorize(p):
             (('Reply-Message', 'User account or Voucher does not exist.'),), (('Auth-Type', 'python'),)) 
 
     # Check whether AP allows user.
+    print_info('*** AP Checking User Eligibility... ***')
     if not check_user_eligibility_on_ap(user, ap):
+        print_info('*** - AP Disallowed User ***')
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'User Unauthorized.'),), (('Auth-Type', 'python'),))
+    else:
+        print_info('*** - AP Allowed User ***')
 
     if user:
         print_info('*** - User fetched successfully: ' + user.username + ' ***')
@@ -54,13 +58,19 @@ def authorize(p):
         print_info('*** Checking Password... ***')
         code = check_user_password(user, password)
         if code in REPLY_CODES_MESSAGES:
+            print_info('*** - ' + REPLY_CODES_MESSAGES[code] + ' ***')
             return display_reply_message(code)
+        else:
+            print_info('*** - User Password Correct :-) ***')
 
         # Check User Account Status
         print_info('*** Checking User Account Status... ***')
         code = check_user_account_status(user)
         if code in REPLY_CODES_MESSAGES:
+            print_info('*** - ' + REPLY_CODES_MESSAGES[code] + ' ***')
             return display_reply_message(code)
+        else:
+            print_info('*** - User Account Active ***')
 
         subscription = get_user_subscription(user)
 
@@ -71,21 +81,33 @@ def authorize(p):
         print_info('*** Checking Password... ***')
         code = check_voucher_password(str(voucher.value), password)
         if code in REPLY_CODES_MESSAGES:
+            print_info('*** - ' + REPLY_CODES_MESSAGES[code] + ' ***')
             return display_reply_message(code)
+        else:
+            print_info('*** - Voucher Password Correct :-) ***')
+            
 
         print_info('*** Checking User Account Status... ***')
         print_info("*** We're skipping account status check for voucher ***")
 
         subscription = get_or_create_subscription(voucher)
 
-    # Check subscription validity
-    print_info('*** Check User Subscription Validity ... ***')
     if not subscription:
         print_info('*** User Has No Subscription... ***')
         return (radiusd.RLM_MODULE_REJECT,
                 (('Reply-Message', "You have no subscription. Click 'Manage Account' below to recharge your account and purchase a package."),), (('Auth-Type', 'python'),))
     else:
+        # Check subscription validity
+        print_info('*** Check User Subscription Validity ... ***')
         response = check_subscription_validity(subscription, user)
+
+        if response[0] == 2:
+            print_info('*** - User Subscription Valid ***')
+            print_info('*** - Sending Access-Accept to Meraki ***')
+        else:
+            print_info('*** - User Subscription Invalid ***')
+            print_info('*** - Sending Access-Reject to Meraki ***')
+
         return response
 
 def accounting(p):

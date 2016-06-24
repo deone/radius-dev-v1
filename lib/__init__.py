@@ -147,30 +147,24 @@ def check_voucher_password(voucher_password, user_password):
     if md5_password(user_password) != voucher_password:
 	return 'VPI'
     else:
-        print_info('*** - Voucher Password Correct :-) ***')
         return True
 
 def check_user_password(user, password):
     if not user.check_password(password):
         return 'UPI'
     else:
-        print_info('*** - User Password Correct :-) ***')
         return True 
 
 def check_user_account_status(user):
     if user.is_active:
-        print_info('*** - User Account Active ***')
         return True
     else:
         return 'UIN'
 
 def check_user_eligibility_on_ap(user, ap):
-    print_info('*** AP Checking User Eligibility... ***')
     if ap.allows(user):
-        print_info('*** - AP Allowed User ***')
         return True
     else:
-        print_info('*** - AP Disallowed User ***')
         return False
 
 def set_logged_in(user):
@@ -187,7 +181,6 @@ def set_logged_in(user):
 
 def check_subscription_validity(subscription, user):
     if subscription.is_valid():
-        print_info('*** - User Subscription Valid ***')
         now = timezone.now()
 
         package_period = str((subscription.stop - now).total_seconds())
@@ -198,17 +191,13 @@ def check_subscription_validity(subscription, user):
 
         set_logged_in(user)
 
-        print_info('*** - Sending Access-Accept to Meraki ***')
         return (radiusd.RLM_MODULE_OK,
             (('Session-Timeout', package_period),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
             (('Auth-Type', 'python'),))
     else:
-        print_info('*** - User Subscription Invalid ***')
-        print_info('*** - Sending Access-Reject to Meraki ***')
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
 
 def display_reply_message(error_code):
-    print_info('*** - ' + REPLY_CODES_MESSAGES[error_code] + ' ***')
     return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', REPLY_CODES_MESSAGES[error_code]),), (('Auth-Type', 'python'),))
