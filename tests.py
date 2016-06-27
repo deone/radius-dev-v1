@@ -312,6 +312,7 @@ class FunctionsTestCase(unittest.TestCase):
 
     def test_check_subscription_validity_valid(self):
         subscription = rules.get_or_create_subscription(self.voucher)
+        print subscription.is_valid()
         response = rules.check_subscription_validity(subscription, self.user)
         self.assertEqual(len(response), 3)
         self.assertEqual(response[0], 2)
