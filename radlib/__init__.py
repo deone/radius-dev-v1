@@ -99,6 +99,7 @@ def get_ap(ap_mac):
         return ap
 
 def check_voucher_password(voucher_password, user_password):
+    print md5_password(user_password), voucher_password
     if md5_password(user_password) != voucher_password:
 	return 'VPI'
     else:
