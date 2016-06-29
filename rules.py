@@ -9,7 +9,7 @@ def instantiate(p):
     return True
 
 def authorize(p):
-    print_info("*** Request Content: " + str(p) + " ***")
+    print_info("*** Response Content: " + str(p) + " ***")
     params = dict(p)
     ap_mac = create_mac(params['Called-Station-Id'])
 
@@ -113,7 +113,7 @@ def authorize(p):
         return response
 
 def accounting(p):
-    print_info("*** Request Content: " + str(p) + " ***")
+    print_info("*** Response Content: " + str(p) + " ***")
     params = dict(p)
 
     username = trim_value(params['User-Name'])
@@ -125,3 +125,5 @@ def accounting(p):
         radcheck.data_usage += Decimal(data_usage)
 	radcheck.is_logged_in = False
 	radcheck.save()
+
+    return radiusd.RLM_MODULE_OK

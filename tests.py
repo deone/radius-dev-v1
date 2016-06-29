@@ -2,6 +2,7 @@
 
 import unittest
 from datetime import timedelta
+from decimal import Decimal
 
 import rules 
 
@@ -19,8 +20,27 @@ from packages.models import (Package, PackageSubscription, GroupPackageSubscript
 class AccountingTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.p = (
-            ('User-Name', '"alwaysdeone@gmail.com"'),
+        self.start = (
+            ('User-Name', '"c@c.com"'),
+            ('Acct-Status-Type', 'Start'),
+            ('Acct-Session-Id', '"624874448301128435"'),
+            ('Called-Station-Id', '"00-18-0A-04-F3-0E:Spectra"'),
+            ('Calling-Station-Id', '"00-27-15-86-96-C1"'),
+            ('Event-Timestamp', '"Jun 29 2016 18:07:16 GMT"'),
+            ('Framed-IP-Address', '10.8.33.147'),
+            ('NAS-Identifier', '"Meraki Cloud Controller RADIUS client"'),
+            ('NAS-IP-Address', '108.161.147.120'),
+            ('NAS-Port', '0'),
+            ('NAS-Port-Id', '"Wireless-802.11"'),
+            ('NAS-Port-Type', 'Wireless-802.11'),
+            ('Service-Type', 'Login-User'),
+            ('Attr-26.29671.1', '0x47482d4b504f4c592d4745462d4241434b2d30312d3031'),
+            ('Acct-Delay-Time', '1'),
+            ('Acct-Unique-Session-Id', '"28e7eacff5a9c95214080b45bb8c0c70"')
+            )
+
+        self.stop = (
+            ('User-Name', '"c@c.com"'),
             ('Acct-Status-Type', 'Stop'),
             ('NAS-IP-Address', '108.161.147.120'),
             ('Event-Timestamp', '"Jun 24 2016 16:03:38 GMT"'),
@@ -45,6 +65,25 @@ class AccountingTestCase(unittest.TestCase):
             ('Acct-Delay-Time', '133'),
             ('Acct-Unique-Session-Id', '"9bdad742d9ec6fd7773efe9ce8f898ae"')
             )
+
+        self.radcheck = Radcheck.objects.create(user=None, username='c@c.com',
+            attribute='MD5-Password', op=':=', value=md5_password('12345'), is_logged_in=True)
+
+    def test_accounting_start(self):
+        result = rules.accounting(self.start)
+        self.assertEqual(result, 2)
+
+    def test_accounting_stop(self):
+        # check whether OK is returned
+        result = rules.accounting(self.stop)
+
+        radcheck = Radcheck.objects.get(username=self.radcheck.username)
+        self.assertEqual(radcheck.data_usage, Decimal('0.2757'))
+        self.assertEqual(radcheck.is_logged_in, False)
+        self.assertEqual(result, 2)
+
+    def tearDown(self):
+        self.radcheck.delete()
 
 class AuthorizeTestCase(unittest.TestCase):
 
