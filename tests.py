@@ -67,7 +67,7 @@ class AuthorizeTestCase(unittest.TestCase):
 
         self.ap = AccessPoint.objects.create(name='My AP', mac_address='00:18:0A:F2:DE:15')
 
-""" class NotFoundTestCase(AuthorizeTestCase):
+class NotFoundTestCase(AuthorizeTestCase):
 
     def setUp(self, *args, **kwargs):
         super(NotFoundTestCase, self).setUp(*args, **kwargs)
@@ -89,7 +89,7 @@ class AuthorizeTestCase(unittest.TestCase):
         self.assertEqual(result[1][0], ('Reply-Message', 'AP Not Found. Please call customer care.'))
 
     def tearDown(self):
-        self.ap.delete() """
+        self.ap.delete()
 
 class AuthorizeVoucherTestCase(AuthorizeTestCase):
 
