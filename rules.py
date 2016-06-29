@@ -81,7 +81,6 @@ def authorize(p):
 
         # Check Password
         print_info('*** Checking Password... ***')
-        print voucher.value, password
         code = check_voucher_password(str(voucher.value), password)
         if code in REPLY_CODES_MESSAGES:
             print_info('*** - ' + REPLY_CODES_MESSAGES[code] + ' ***')

@@ -106,7 +106,6 @@ class AuthorizeVoucherTestCase(AuthorizeTestCase):
         self.voucher.value = md5_password('00000')
         self.voucher.save()
 
-        print 'Voucher Value', self.voucher.value
         result = rules.authorize(self.p)
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], 0)
