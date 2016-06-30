@@ -127,3 +127,9 @@ def accounting(p):
 	radcheck.save()
 
     return radiusd.RLM_MODULE_OK
+
+def recv_coa(p):
+    print_info("*** Response Content - Receive CoA: " + str(p) + " ***")
+
+def send_coa(p):
+    print_info("*** Response Content - Send CoA: " + str(p) + " ***")
