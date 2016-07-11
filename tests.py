@@ -68,20 +68,20 @@ class AccountingTestCase(unittest.TestCase):
             )
 
         self.radcheck = Radcheck.objects.create(user=None, username='c@c.com',
-            attribute='MD5-Password', op=':=', value=md5_password('12345'), is_logged_in=True)
+            attribute='MD5-Password', op=':=', value=md5_password('12345'), is_logged_in=True, data_balance=1)
 
     def test_accounting_start(self):
         result = rules.accounting(self.start)
         self.assertEqual(result, 2)
 
-    """ def test_accounting_stop(self):
+    def test_accounting_stop(self):
         # check whether OK is returned
         result = rules.accounting(self.stop)
 
         radcheck = Radcheck.objects.get(username=self.radcheck.username)
-        self.assertEqual(radcheck.data_usage, Decimal('0.2757'))
+        self.assertEqual(radcheck.data_balance, Decimal('0.72'))
         self.assertEqual(radcheck.is_logged_in, False)
-        self.assertEqual(result, 2) """
+        self.assertEqual(result, 2)
 
     def tearDown(self):
         self.radcheck.delete()
@@ -248,7 +248,7 @@ class FunctionsTestCase(unittest.TestCase):
         self.group = GroupAccount.objects.create(name='CUG', max_no_of_users=10)
         self.subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274', group=self.group)
         self.voucher = Radcheck.objects.create(user=self.user, username=self.username,
-            attribute='MD5-Password', op=':=', value=md5_password(self.password))
+            attribute='MD5-Password', op=':=', value=md5_password(self.password), data_balance=1)
         self.package = Package.objects.create(package_type='Daily',
             volume='3', speed='1.5', price=4)
         self.ivoucher = InstantVoucher.objects.create(radcheck=self.voucher, package=self.package)
@@ -353,7 +353,6 @@ class FunctionsTestCase(unittest.TestCase):
     def test_check_subscription_validity_valid(self):
         subscription = radlib.get_or_create_subscription(self.voucher)
         response = radlib.check_subscription_validity(subscription, self.user)
-        print response
         self.assertEqual(len(response), 3)
         self.assertEqual(response[0], 2)
         subscription.delete()
