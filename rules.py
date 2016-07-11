@@ -122,7 +122,12 @@ def accounting(p):
     if acct_status_type == 'Stop':
         radcheck = Radcheck.objects.get(username__exact=username)
         data_usage = (int(params['Acct-Input-Octets']) + int(params['Acct-Output-Octets'])) / 1000000000.0
-        radcheck.data_usage += Decimal(data_usage)
+
+        # Deduct data usage from data balance
+        radcheck.data_balance = radcheck.data_balance - Decimal(data_usage)
+
+        # Only group users are set logged in. So this
+        # would make no difference with individual users.
 	radcheck.is_logged_in = False
 	radcheck.save()
 
