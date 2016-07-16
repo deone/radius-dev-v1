@@ -124,7 +124,11 @@ def accounting(p):
         data_usage = (int(params['Acct-Input-Octets']) + int(params['Acct-Output-Octets'])) / 1000000000.0
 
         # Deduct data usage from data balance
-        radcheck.data_balance = radcheck.data_balance - Decimal(data_usage)
+        data_balance = radcheck.data_balance - Decimal(data_usage)
+        if data_balance < 0:
+            radcheck.data_balance = 0
+        else:
+            radcheck.data_balance = data_balance
 
         # Only group users are set logged in. So this
         # would make no difference with individual users.
