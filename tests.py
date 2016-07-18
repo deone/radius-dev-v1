@@ -24,47 +24,13 @@ class AccountingTestCase(unittest.TestCase):
         self.start = (
             ('User-Name', '"c@c.com"'),
             ('Acct-Status-Type', 'Start'),
-            ('Acct-Session-Id', '"624874448301128435"'),
-            ('Called-Station-Id', '"00-18-0A-04-F3-0E:Spectra"'),
-            ('Calling-Station-Id', '"00-27-15-86-96-C1"'),
-            ('Event-Timestamp', '"Jun 29 2016 18:07:16 GMT"'),
-            ('Framed-IP-Address', '10.8.33.147'),
-            ('NAS-Identifier', '"Meraki Cloud Controller RADIUS client"'),
-            ('NAS-IP-Address', '108.161.147.120'),
-            ('NAS-Port', '0'),
-            ('NAS-Port-Id', '"Wireless-802.11"'),
-            ('NAS-Port-Type', 'Wireless-802.11'),
-            ('Service-Type', 'Login-User'),
-            ('Attr-26.29671.1', '0x47482d4b504f4c592d4745462d4241434b2d30312d3031'),
-            ('Acct-Delay-Time', '1'),
-            ('Acct-Unique-Session-Id', '"28e7eacff5a9c95214080b45bb8c0c70"')
             )
 
         self.stop = (
             ('User-Name', '"c@c.com"'),
             ('Acct-Status-Type', 'Stop'),
-            ('NAS-IP-Address', '108.161.147.120'),
-            ('Event-Timestamp', '"Jun 24 2016 16:03:38 GMT"'),
-            ('Acct-Input-Packets', '283160'),
-            ('Acct-Output-Packets', '338826'),
             ('Acct-Input-Octets', '255909888'),
-            ('NAS-Port-Type', 'Wireless-802.11'),
-            ('Acct-Session-Id', '"624874448301086964"'),
-            ('Acct-Terminate-Cause', 'Admin-Reset'),
-            ('Attr-26.29671.1', '0x47482d4b504f4c592d4353422d30312d3032'),
-            ('Calling-Station-Id', '"88-25-2C-E3-EF-E5"'),
-            ('NAS-Port-Id', '"Wireless-802.11"'),
-            ('NAS-Identifier', '"Meraki Cloud Controller RADIUS client"'),
-            ('Framed-IP-Address', '10.8.59.86'),
-            ('Called-Station-Id', '"00-18-0A-F2-E2-70:Spectra"'),
-            ('Acct-Input-Gigawords', '0'),
-            ('Service-Type', 'Login-User'),
             ('Acct-Output-Octets', '19741696'),
-            ('NAS-Port', '0'),
-            ('Acct-Session-Time', '94463'),
-            ('Acct-Output-Gigawords', '0'),
-            ('Acct-Delay-Time', '133'),
-            ('Acct-Unique-Session-Id', '"9bdad742d9ec6fd7773efe9ce8f898ae"')
             )
 
         self.username = 'c@c.com'
@@ -90,34 +56,17 @@ class AccountingTestCase(unittest.TestCase):
         excess_octets_stop = (
             ('User-Name', '"c@c.com"'),
             ('Acct-Status-Type', 'Stop'),
-            ('NAS-IP-Address', '108.161.147.120'),
-            ('Event-Timestamp', '"Jun 24 2016 16:03:38 GMT"'),
-            ('Acct-Input-Packets', '283160'),
-            ('Acct-Output-Packets', '338826'),
             ('Acct-Input-Octets', '600000000'),
-            ('NAS-Port-Type', 'Wireless-802.11'),
-            ('Acct-Session-Id', '"624874448301086964"'),
-            ('Acct-Terminate-Cause', 'Admin-Reset'),
-            ('Attr-26.29671.1', '0x47482d4b504f4c592d4353422d30312d3032'),
-            ('Calling-Station-Id', '"88-25-2C-E3-EF-E5"'),
-            ('NAS-Port-Id', '"Wireless-802.11"'),
-            ('NAS-Identifier', '"Meraki Cloud Controller RADIUS client"'),
-            ('Framed-IP-Address', '10.8.59.86'),
-            ('Called-Station-Id', '"00-18-0A-F2-E2-70:Spectra"'),
-            ('Acct-Input-Gigawords', '0'),
-            ('Service-Type', 'Login-User'),
             ('Acct-Output-Octets', '500000000'),
-            ('NAS-Port', '0'),
-            ('Acct-Session-Time', '94463'),
-            ('Acct-Output-Gigawords', '0'),
-            ('Acct-Delay-Time', '133'),
-            ('Acct-Unique-Session-Id', '"9bdad742d9ec6fd7773efe9ce8f898ae"')
             )
         result = rules.accounting(excess_octets_stop)
 
         radcheck = Radcheck.objects.get(username=self.radcheck.username)
         self.assertEqual(radcheck.data_balance, Decimal('0.00'))
         self.assertEqual(result, 2)
+
+    def test_accounting_stop_group(self):
+        pass
 
     def tearDown(self):
         self.user.delete()
