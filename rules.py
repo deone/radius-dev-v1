@@ -123,16 +123,27 @@ def accounting(p):
         radcheck = Radcheck.objects.get(username__exact=username)
         data_usage = (int(params['Acct-Input-Octets']) + int(params['Acct-Output-Octets'])) / 1000000000.0
 
-        # Deduct data usage from data balance
-        data_balance = radcheck.data_balance - Decimal(data_usage)
-        if data_balance < 0:
-            radcheck.data_balance = 0
-        else:
-            radcheck.data_balance = data_balance
+        user = getattr(radcheck, 'user', None)
+        if user is not None:
+            if user.subscriber.group is not None:
+                group = GroupAccount.objects.get(name__exact=user.subscriber.group.name)
+                data_balance = group.data_balance - Decimal(data_usage)
+                if data_balance < 0:
+                    group.data_balance = 0
+                else:
+                    group.data_balance = data_balance
+                group.save()
+                # Only group users are set logged in. So this
+                # would make no difference with individual users.
+	        radcheck.is_logged_in = False
+            else:
+                # Deduct data usage from data balance
+                data_balance = radcheck.data_balance - Decimal(data_usage)
+                if data_balance < 0:
+                    radcheck.data_balance = 0
+                else:
+                    radcheck.data_balance = data_balance
 
-        # Only group users are set logged in. So this
-        # would make no difference with individual users.
-	radcheck.is_logged_in = False
 	radcheck.save()
 
     return radiusd.RLM_MODULE_OK

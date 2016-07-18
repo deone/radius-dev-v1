@@ -67,23 +67,26 @@ class AccountingTestCase(unittest.TestCase):
             ('Acct-Unique-Session-Id', '"9bdad742d9ec6fd7773efe9ce8f898ae"')
             )
 
-        self.radcheck = Radcheck.objects.create(user=None, username='c@c.com',
-            attribute='MD5-Password', op=':=', value=md5_password('12345'), is_logged_in=True, data_balance=1)
+        self.username = 'c@c.com'
+        self.password = '12345'
+        self.user = User.objects.create_user(self.username, self.username, self.password)
+        Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
+        self.radcheck = Radcheck.objects.create(user=self.user, username=self.username,
+            attribute='MD5-Password', op=':=', value=md5_password(self.password), is_logged_in=True, data_balance=1)
 
     def test_accounting_start(self):
         result = rules.accounting(self.start)
         self.assertEqual(result, 2)
 
-    def test_accounting_stop(self):
+    def test_accounting_stop_individual(self):
         # check whether OK is returned
         result = rules.accounting(self.stop)
 
         radcheck = Radcheck.objects.get(username=self.radcheck.username)
         self.assertEqual(radcheck.data_balance, Decimal('0.72'))
-        self.assertEqual(radcheck.is_logged_in, False)
         self.assertEqual(result, 2)
 
-    def test_accounting_stop_negative(self):
+    def test_accounting_stop_individual_negative(self):
         excess_octets_stop = (
             ('User-Name', '"c@c.com"'),
             ('Acct-Status-Type', 'Stop'),
@@ -114,11 +117,10 @@ class AccountingTestCase(unittest.TestCase):
 
         radcheck = Radcheck.objects.get(username=self.radcheck.username)
         self.assertEqual(radcheck.data_balance, Decimal('0.00'))
-        self.assertEqual(radcheck.is_logged_in, False)
         self.assertEqual(result, 2)
 
     def tearDown(self):
-        self.radcheck.delete()
+        self.user.delete()
 
 class AuthorizeTestCase(unittest.TestCase):
 
