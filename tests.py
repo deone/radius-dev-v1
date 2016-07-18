@@ -33,10 +33,18 @@ class AccountingTestCase(unittest.TestCase):
             ('Acct-Output-Octets', '19741696'),
             )
 
+        self.excess_octets_stop = (
+            ('User-Name', '"c@c.com"'),
+            ('Acct-Status-Type', 'Stop'),
+            ('Acct-Input-Octets', '600000000'),
+            ('Acct-Output-Octets', '500000000'),
+            )
+
         self.username = 'c@c.com'
         self.password = '12345'
+        self.group = GroupAccount.objects.create(name='CUG', max_no_of_users=10, data_balance=1)
         self.user = User.objects.create_user(self.username, self.username, self.password)
-        Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
+        self.subscriber = Subscriber.objects.create(user=self.user, country='NGA', phone_number='+2348029299274')
         self.radcheck = Radcheck.objects.create(user=self.user, username=self.username,
             attribute='MD5-Password', op=':=', value=md5_password(self.password), is_logged_in=True, data_balance=1)
 
@@ -53,23 +61,34 @@ class AccountingTestCase(unittest.TestCase):
         self.assertEqual(result, 2)
 
     def test_accounting_stop_individual_negative(self):
-        excess_octets_stop = (
-            ('User-Name', '"c@c.com"'),
-            ('Acct-Status-Type', 'Stop'),
-            ('Acct-Input-Octets', '600000000'),
-            ('Acct-Output-Octets', '500000000'),
-            )
-        result = rules.accounting(excess_octets_stop)
+        result = rules.accounting(self.excess_octets_stop)
 
         radcheck = Radcheck.objects.get(username=self.radcheck.username)
         self.assertEqual(radcheck.data_balance, Decimal('0.00'))
         self.assertEqual(result, 2)
 
-    def test_accounting_stop_group(self):
-        pass
+    def test_accounting_stop_group_member(self):
+        self.subscriber.group = self.group
+        self.subscriber.save()
+
+        result = rules.accounting(self.stop)
+        group = GroupAccount.objects.get(name=self.group.name)
+        self.assertEqual(group.data_balance, Decimal('0.72'))
+        self.assertEqual(result, 2)
+
+    def test_accounting_stop_group_member_negative(self):
+        self.subscriber.group = self.group
+        self.subscriber.save()
+
+        result = rules.accounting(self.excess_octets_stop)
+
+        group = GroupAccount.objects.get(name=self.group.name)
+        self.assertEqual(group.data_balance, Decimal('0.00'))
+        self.assertEqual(result, 2)
 
     def tearDown(self):
         self.user.delete()
+        self.group.delete()
 
 class AuthorizeTestCase(unittest.TestCase):
 
