@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import rules
-import radlib
 
 import unittest
 from datetime import timedelta
@@ -245,8 +244,8 @@ class FunctionsTestCase(unittest.TestCase):
         
         self.now = timezone.now()
         self.params = dict(self.p)
-        self.username = radlib.trim_value(self.params['User-Name'])
-        self.password = radlib.trim_value(self.params['User-Password'])
+        self.username = rules.trim_value(self.params['User-Name'])
+        self.password = rules.trim_value(self.params['User-Password'])
 
         self.user = User.objects.create_user(self.username, self.username, self.password)
         self.group = GroupAccount.objects.create(name='CUG', max_no_of_users=10)
@@ -262,110 +261,110 @@ class FunctionsTestCase(unittest.TestCase):
         self.assertTrue(rules.instantiate(self.p))
 
     def test_create_mac(self):
-        mac = radlib.create_mac(self.params['Called-Station-Id'])
+        mac = rules.create_mac(self.params['Called-Station-Id'])
         self.assertEqual(mac, '00:18:0A:F2:DE:11')
 
     def test_get_or_create_subscription(self):
-        subscription = radlib.get_or_create_subscription(self.voucher)
+        subscription = rules.get_or_create_subscription(self.voucher)
         self.assertTrue(isinstance(subscription, PackageSubscription))
         subscription.delete()
 
     def test_set_logged_in(self):
-        self.assertTrue(radlib.set_logged_in(self.user))
+        self.assertTrue(rules.set_logged_in(self.user))
 
     def test_get_user_subscription(self):
         self.user.subscriber.group = None
-        radlib.create_subscription(self.voucher, self.package)
-        subscription = radlib.get_user_subscription(self.user)
+        rules.create_subscription(self.voucher, self.package)
+        subscription = rules.get_user_subscription(self.user)
         self.assertTrue(isinstance(subscription, PackageSubscription))
         subscription.delete()
 
     def test_get_user_subscription_None(self):
-        subscription = radlib.get_user_subscription(self.user)
+        subscription = rules.get_user_subscription(self.user)
         self.assertEqual(subscription, None)
 
     def test_get_user_subscription_group_valid(self):
         gps = GroupPackageSubscription.objects.create(group=self.group, package=self.package, start=self.now,
             stop=self.now + timedelta(hours=PACKAGE_TYPES_HOURS_MAP[self.package.package_type]))
 
-        subscription = radlib.get_user_subscription(self.user)
+        subscription = rules.get_user_subscription(self.user)
         self.assertTrue(isinstance(subscription, GroupPackageSubscription))
         gps.delete()
 
     def test_get_user_subscription_group_IndexError(self):
-        subscription = radlib.get_user_subscription(self.user)
+        subscription = rules.get_user_subscription(self.user)
         self.assertEqual(subscription, None)
 
     def test_get_user(self):
-        user = radlib.get_user(self.username)
+        user = rules.get_user(self.username)
         self.assertTrue(isinstance(user, User))
 
     def test_get_user_None(self):
-        self.assertEqual(radlib.get_user('hhhh'), None)
+        self.assertEqual(rules.get_user('hhhh'), None)
 
     def test_get_voucher(self):
         username = 'aaaa'
         voucher = Radcheck.objects.create(user=None, username=username,
             attribute='MD5-Password', op=':=', value=md5_password('12345'))
-        self.assertTrue(isinstance(radlib.get_voucher(username), Radcheck))
+        self.assertTrue(isinstance(rules.get_voucher(username), Radcheck))
         voucher.delete()
 
     def test_get_voucher_None(self):
-        self.assertEqual(radlib.get_voucher('bbbb'), None)
+        self.assertEqual(rules.get_voucher('bbbb'), None)
 
     def test_get_ap(self):
-        ap = radlib.get_ap('00:18:0A:F2:DE:11')
+        ap = rules.get_ap('00:18:0A:F2:DE:11')
         self.assertTrue(isinstance(ap, AccessPoint))
 
     def test_get_ap_None(self):
-        self.assertEqual(radlib.get_ap('00:18:0A:F2:DE:12'), None)
+        self.assertEqual(rules.get_ap('00:18:0A:F2:DE:12'), None)
 
     def test_check_voucher_password_valid(self):
-        self.assertTrue(radlib.check_voucher_password(self.voucher, '12345'))
+        self.assertTrue(rules.check_voucher_password(self.voucher, '12345'))
 
     def test_check_voucher_password_invalid(self):
-        invalid = radlib.check_voucher_password(self.voucher, '00000')
+        invalid = rules.check_voucher_password(self.voucher, '00000')
         self.assertEqual(invalid, 'VPI')
-        self.assertEqual(radlib.REPLY_CODES_MESSAGES[invalid], 'Voucher Password Incorrect')
+        self.assertEqual(rules.REPLY_CODES_MESSAGES[invalid], 'Voucher Password Incorrect')
 
     def test_check_user_password_valid(self):
-        self.assertTrue(radlib.check_user_password(self.user, '12345'))
+        self.assertTrue(rules.check_user_password(self.user, '12345'))
 
     def test_check_user_password_invalid(self):
-        invalid = radlib.check_user_password(self.user, '00000')
+        invalid = rules.check_user_password(self.user, '00000')
         self.assertEqual(invalid, 'UPI')
-        self.assertEqual(radlib.REPLY_CODES_MESSAGES[invalid], 'User Password Incorrect')
+        self.assertEqual(rules.REPLY_CODES_MESSAGES[invalid], 'User Password Incorrect')
 
     def test_check_user_account_status_valid(self):
-        self.assertTrue(radlib.check_user_account_status(self.user))
+        self.assertTrue(rules.check_user_account_status(self.user))
 
     def test_check_user_account_status_invalid(self):
         self.user.is_active = False
         self.user.save()
-        invalid = radlib.check_user_account_status(self.user)
+        invalid = rules.check_user_account_status(self.user)
         self.assertEqual(invalid, 'UIN')
-        self.assertEqual(radlib.REPLY_CODES_MESSAGES[invalid], 'User Inactive')
+        self.assertEqual(rules.REPLY_CODES_MESSAGES[invalid], 'User Inactive')
 
     def test_check_user_eligibility_on_ap_valid(self):
         self.ap.status = 'PUB'
         self.ap.save()
-        self.assertTrue(radlib.check_user_eligibility_on_ap(self.user, self.ap))
+        self.assertTrue(rules.check_user_eligibility_on_ap(self.user, self.ap))
 
     def test_check_user_eligibility_on_ap_invalid(self):
-        self.assertFalse(radlib.check_user_eligibility_on_ap(self.user, self.ap))
+        self.assertFalse(rules.check_user_eligibility_on_ap(self.user, self.ap))
 
     def test_check_subscription_validity_valid(self):
-        subscription = radlib.get_or_create_subscription(self.voucher)
-        response = radlib.check_subscription_validity(subscription, self.user)
+        subscription = rules.get_or_create_subscription(self.voucher)
+        response = rules.check_subscription_validity(subscription, self.user)
         self.assertEqual(len(response), 3)
         self.assertEqual(response[0], 2)
         subscription.delete()
 
     def test_check_subscription_validity_invalid(self):
-        subscription = radlib.get_or_create_subscription(self.voucher)
+        subscription = rules.get_or_create_subscription(self.voucher)
         subscription.stop = self.now - timedelta(hours=PACKAGE_TYPES_HOURS_MAP[subscription.package.package_type])
         subscription.save()
-        response = radlib.check_subscription_validity(subscription, self.user)
+        response = rules.check_subscription_validity(subscription, self.user)
         self.assertEqual(len(response), 3)
         self.assertEqual(response[0], 0)
         subscription.delete()
