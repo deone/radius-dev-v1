@@ -4,11 +4,11 @@ BILLINGPATH=/root/billing/billing
 INSTPATH=/usr/lib/python2.7/site-packages
 
 echo "Removing obsolete files..."
-rm -rf $INSTPATH/rules.py $INSTPATH/radlib
+rm -rf $INSTPATH/rules.py
 rm -rf $INSTPATH/billing $INSTPATH/accounts $INSTPATH/longer_username $INSTPATH/packages $INSTPATH/payments $INSTPATH/search $INSTPATH/utils
 
 echo "Copying new files to site-packages..."
-cp -r rules.py radlib $INSTPATH
+cp -r rules.py $INSTPATH
 cp -r $BILLINGPATH/billing $BILLINGPATH/accounts $BILLINGPATH/longer_username $BILLINGPATH/packages $BILLINGPATH/payments $BILLINGPATH/search $BILLINGPATH/utils $INSTPATH
 
 echo "Deployment done"
