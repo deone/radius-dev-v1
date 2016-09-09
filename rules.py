@@ -154,7 +154,7 @@ def check_subscription_validity(subscription, user):
         set_logged_in(user)
 
         return (radiusd.RLM_MODULE_OK,
-            (('Session-Timeout', package_period),('Acct-Interim-Interval', '600'),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
+            (('Session-Timeout', package_period),('Acct-Interim-Interval', '300'),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
             (('Auth-Type', 'python'),))
     else:
         return (radiusd.RLM_MODULE_REJECT,
@@ -291,10 +291,10 @@ def accounting(p):
             # Group user
             if user.subscriber.group is not None:
                 group = GroupAccount.objects.get(name__exact=user.subscriber.group.name)
-                usage = data_usage - group.data_usage
+                usage = Decimal(data_usage) - group.data_usage
 
-                data_balance = group.data_balance - Decimal(usage)
-                group.data_usage = data_usage
+                data_balance = group.data_balance - usage
+                group.data_usage = Decimal(data_usage)
 
                 if data_balance < 0:
                     group.data_balance = 0
@@ -306,25 +306,32 @@ def accounting(p):
 	        radcheck.is_logged_in = False
                 group.save()
             else:
-                usage = data_usage - radcheck.data_usage
+                usage = Decimal(data_usage) - radcheck.data_usage
 
-                data_balance = radcheck.data_balance - Decimal(usage)
-                radcheck.data_usage = data_usage
+                data_balance = radcheck.data_balance - usage
+                radcheck.data_usage = Decimal(data_usage)
 
                 if data_balance < 0:
                     radcheck.data_balance = 0
                 else:
                     radcheck.data_balance = data_balance
-                radcheck.save()
+            radcheck.save()
+	else:
+	    # Deal with instant vouchers here
+	    pass
 
     if acct_status_type == 'Stop':
-        if radcheck:
-            radcheck.data_usage = 0
-            radcheck.save()
-
-        if group:
-            group.data_usage = 0
-            group.save()
+	if user is not None:
+	    if user.subscriber.group is not None:
+                group = GroupAccount.objects.get(name__exact=user.subscriber.group.name)
+		group.data_usage = 0
+		group.save()
+	    else:
+		radcheck.data_usage = 0
+		radcheck.save()
+	else:
+	    # Deal with instant vouchers here
+	    pass
 
     return radiusd.RLM_MODULE_OK
 
