@@ -282,32 +282,49 @@ def accounting(p):
     username = trim_value(params['User-Name'])
     acct_status_type = params['Acct-Status-Type']
 
-    if acct_status_type == 'Stop':
+    if acct_status_type == 'Stop' or acct_status_type == 'Interim-Update':
         radcheck = Radcheck.objects.get(username__exact=username)
         data_usage = (int(params['Acct-Input-Octets']) + int(params['Acct-Output-Octets'])) / 1000000000.0
 
         user = getattr(radcheck, 'user', None)
         if user is not None:
+            # Group user
             if user.subscriber.group is not None:
                 group = GroupAccount.objects.get(name__exact=user.subscriber.group.name)
-                data_balance = group.data_balance - Decimal(data_usage)
+                usage = data_usage - group.data_usage
+
+                data_balance = group.data_balance - Decimal(usage)
+                group.data_usage = data_usage
+
                 if data_balance < 0:
                     group.data_balance = 0
                 else:
                     group.data_balance = data_balance
-                group.save()
+
                 # Only group users are set logged in. So this
                 # would make no difference with individual users.
 	        radcheck.is_logged_in = False
+                group.save()
             else:
-                # Deduct data usage from data balance
-                data_balance = radcheck.data_balance - Decimal(data_usage)
+                usage = data_usage - radcheck.data_usage
+
+                data_balance = radcheck.data_balance - Decimal(usage)
+                radcheck.data_usage = data_usage
+
                 if data_balance < 0:
                     radcheck.data_balance = 0
                 else:
                     radcheck.data_balance = data_balance
+                radcheck.save()
 
-	radcheck.save()
+    if acct_status_type == 'Stop':
+        if radcheck:
+            radcheck.data_usage = 0
+            radcheck.save()
+
+        if group:
+            group.data_usage = 0
+            group.save()
 
     return radiusd.RLM_MODULE_OK
 
