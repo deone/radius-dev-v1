@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 
 import os
+import time
+import subprocess
 from decimal import Decimal
 from datetime import timedelta
 
@@ -164,6 +166,11 @@ def display_reply_message(error_code):
     return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', REPLY_CODES_MESSAGES[error_code]),), (('Auth-Type', 'python'),))
 
+def send_disconnect_request(acct_session_id):
+    payload = "Acct-Session-Id = " + acct_session_id + ",Event-Timestamp = '" + str(int(round(time.time()))) + "'"
+    echo = subprocess.Popen(['echo', payload], stdout=subprocess.PIPE)
+    output = subprocess.check_output(['radclient', '-x', 'n110.meraki.com:3799', 'disconnect', 'testing123'], stdin=echo.stdout)
+    return output
 
 
 
@@ -281,12 +288,14 @@ def accounting(p):
 
     username = trim_value(params['User-Name'])
     acct_status_type = params['Acct-Status-Type']
+    acct_session_id = params['Acct-Session-Id']
 
     if acct_status_type == 'Stop' or acct_status_type == 'Interim-Update':
         radcheck = Radcheck.objects.get(username__exact=username)
         data_usage = (int(params['Acct-Input-Octets']) + int(params['Acct-Output-Octets'])) / 1000000000.0
 
         user = getattr(radcheck, 'user', None)
+
         if user is not None:
             # Group user
             if user.subscriber.group is not None:
@@ -296,8 +305,17 @@ def accounting(p):
                 data_balance = group.data_balance - usage
                 group.data_usage = Decimal(data_usage)
 
-                if data_balance < 0:
+                if data_balance <= 0:
                     group.data_balance = 0
+		    #######
+		    print_info('*** - Sending Disconnect-Request to Meraki ***')
+		    if acct_status_type == 'Interim-Update':
+		        output = send_disconnect_request(acct_session_id)
+		        if output.find('Disconnect-ACK') != -1:
+			    print_info("*** - User Disconnected ***")
+		        else:
+			    print_info("*** - User Disconnection Failed ***")
+		    #######
                 else:
                     group.data_balance = data_balance
 
@@ -311,8 +329,17 @@ def accounting(p):
                 data_balance = radcheck.data_balance - usage
                 radcheck.data_usage = Decimal(data_usage)
 
-                if data_balance < 0:
+                if data_balance <= 0:
                     radcheck.data_balance = 0
+		    #######
+		    print_info('*** - Sending Disconnect-Request to Meraki ***')
+		    if acct_status_type == 'Interim-Update':
+		        output = send_disconnect_request(acct_session_id)
+		        if output.find('Disconnect-ACK') != -1:
+			    print_info("*** - User Disconnected ***")
+		        else:
+			    print_info("*** - User Disconnection Failed ***")
+		    #######
                 else:
                     radcheck.data_balance = data_balance
             radcheck.save()
