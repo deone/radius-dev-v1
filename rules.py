@@ -157,7 +157,7 @@ def check_subscription_validity(subscription, user):
 
         return (radiusd.RLM_MODULE_OK,
             (('Session-Timeout', package_period),('Acct-Interim-Interval', '1200'),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
-            (('Auth-Type', 'python'),))
+            (('Auth-Type', 'Accept'),))
     else:
         return (radiusd.RLM_MODULE_REJECT,
             (('Reply-Message', 'Subscription Invalid'),), (('Auth-Type', 'python'),))
