@@ -169,7 +169,7 @@ def check_subscription_validity(subscription, user):
         set_logged_in(user)
 
         return (radiusd.RLM_MODULE_OK,
-            (('Session-Timeout', package_period),('Acct-Interim-Interval', '1200'),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
+            (('Session-Timeout', package_period),('Acct-Interim-Interval', '300'),('Maximum-Data-Rate-Upstream', bandwidth_limit),('Maximum-Data-Rate-Downstream', bandwidth_limit)),
             (('Auth-Type', 'Accept'),))
     else:
         return (radiusd.RLM_MODULE_REJECT,
@@ -306,6 +306,7 @@ def accounting(p):
     if acct_status_type == 'Stop' or acct_status_type == 'Interim-Update':
         radcheck = Radcheck.objects.get(username__exact=username)
         data_usage = (int(params['Acct-Input-Octets']) + int(params['Acct-Output-Octets'])) / 1000000000.0
+        print_info(str(username) + ' - Usage since logged in: ' + str(data_usage))
 
         user = getattr(radcheck, 'user', None)
 
@@ -338,8 +339,13 @@ def accounting(p):
                 group.save()
             else:
                 usage = Decimal(data_usage) - radcheck.data_usage
+                print_info(str(username) + ' - Usage since last usage calculation: ' + str(usage))
+                print_info(str(username) + ' - Current data balance: ' + str(radcheck.data_balance))
 
                 data_balance = radcheck.data_balance - usage
+                print_info(str(username) + ' - New data balance: ' + str(data_balance))
+                print_info(str(username) + '*****************************************************')
+
                 radcheck.data_usage = Decimal(data_usage)
 
                 if data_balance <= 0:
